@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: h_gate
+      MYSQL_USER: h_gate_user
+      MYSQL_PASSWORD: h_gate_pass
+    volumes:
+      - h_gate_db_data:/var/lib/mysql
+    networks:
+      - h_gate_network    # stesso nome sotto
+
+volumes:
+  h_gate_db_data:
+
+networks:
+  h_gate_network:        # deve coincidere con quello sopra
+    driver: bridge

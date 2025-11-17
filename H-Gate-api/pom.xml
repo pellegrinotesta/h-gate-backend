@@ -15,7 +15,7 @@
 	<description>Api per sistema sanitario</description>
 	<url/>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 		<!-- Utility -->
@@ -89,6 +89,13 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- Swagger -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+
 		<!-- MapStruct -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>
@@ -100,6 +107,7 @@
 			<artifactId>lombok-mapstruct-binding</artifactId>
 			<version>0.2.0</version>
 		</dependency>
+
 		<!-- Database -->
 		<dependency>
 			<groupId>com.h2database</groupId>

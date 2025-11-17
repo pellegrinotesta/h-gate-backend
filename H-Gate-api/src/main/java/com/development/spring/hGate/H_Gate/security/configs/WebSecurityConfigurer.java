@@ -63,10 +63,10 @@ public class WebSecurityConfigurer {
                         .requestMatchers("/version/").permitAll()
                         .requestMatchers("/password/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/frames/**").permitAll()
-                        .requestMatchers("/settings/**").permitAll()
-                        .requestMatchers("/passepartout/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

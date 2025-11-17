@@ -13,10 +13,10 @@ import java.util.Date;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UserRegistrationDTO {
 
-    private String password;
+    private String passwordHash;
     private String email;
-    private String name;
-    private String surname;
+    private String nome;
+    private String cognome;
     private String codiceFiscale;
     private Date dataNascita;
     private String telefono;

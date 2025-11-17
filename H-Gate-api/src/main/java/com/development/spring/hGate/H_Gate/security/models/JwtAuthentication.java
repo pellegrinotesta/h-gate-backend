@@ -18,7 +18,7 @@ import java.util.Set;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JwtAuthentication implements Authentication {
 
-    private Long id;
+    private Integer id;
     @JsonProperty("sub")
     private String username;
     private Long iat; // Epoch in seconds
@@ -61,11 +61,11 @@ public class JwtAuthentication implements Authentication {
         return false;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

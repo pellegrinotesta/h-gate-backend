@@ -21,7 +21,7 @@ public class UserSessionService {
 
     private static final String USER_ID_NOT_FOUND = "User with id %d not found.";
 
-    public Users getById(Long id) {
+    public Users getById(Integer id) {
         Optional<Users> user = userRepository.findById(id);
         if (user.isEmpty()) {
             throw buildUserWithIdNotFoundException(id);
@@ -29,7 +29,7 @@ public class UserSessionService {
         return user.get();
     }
 
-    private ResponseStatusException buildUserWithIdNotFoundException(Long id) {
+    private ResponseStatusException buildUserWithIdNotFoundException(Integer id) {
         String message = String.format(USER_ID_NOT_FOUND, id);
         return new ResponseStatusException(HttpStatus.NOT_FOUND, message);
     }

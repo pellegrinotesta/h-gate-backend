@@ -11,11 +11,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public abstract class BasicEntity implements IdentifiableEntity<Long> {
+public abstract class BasicEntity implements IdentifiableEntity<Integer> {
 
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
+    protected Integer id;
 
 }

@@ -2,15 +2,21 @@ package com.development.spring.hGate.H_Gate.entity;
 
 import com.development.spring.hGate.H_Gate.shared.entities.BasicEntity;
 import com.development.spring.hGate.H_Gate.shared.models.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.util.HashSet;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -20,15 +26,86 @@ import java.util.Set;
 @Table(name = "users")
 public class Users extends BasicEntity {
 
-    private String password;
+    @Column(unique = true, nullable = false, length = 36)
+    private String uuid;
 
+    @Email
+    @NotBlank
+    @Column(unique = true, nullable = false)
     private String email;
 
-    private String name;
+    @JsonIgnore
+    @NotBlank
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
 
-    private String surname;
+    @NotBlank
+    @Size(min = 2, max = 100)
+    @Column(nullable = false, length = 100)
+    private String nome;
 
-    private String status;
+    @NotBlank
+    @Size(min = 2, max = 100)
+    @Column(nullable = false, length = 100)
+    private String cognome;
+
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$")
+    @Column(length = 20)
+    private String telefono;
+
+    @Column(name = "data_nascita")
+    private LocalDate dataNascita;
+
+    @Column(columnDefinition = "TEXT")
+    private String indirizzo;
+
+    @Column(length = 100)
+    private String citta;
+
+    @Column(length = 2)
+    private String provincia;
+
+    @Column(length = 5)
+    private String cap;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_expires")
+    private LocalDateTime resetPasswordExpires;
+
+    @Column(name = "ultimo_accesso")
+    private LocalDateTime ultimoAccesso;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Metodi helper
+    @PrePersist
+    protected void onCreate() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID().toString();
+        }
+    }
+
+    @JsonProperty("nomeCompleto")
+    public String getNomeCompleto() {
+        return nome + " " + cognome;
+    }
 
     public @NotEmpty Set<Role> getRoles() {
         return roles;

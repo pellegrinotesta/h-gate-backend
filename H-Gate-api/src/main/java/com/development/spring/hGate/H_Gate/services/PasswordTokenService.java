@@ -58,7 +58,7 @@ public class PasswordTokenService {
     }
 
     public void changeUserPassword(Users user, String password) {
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
     }
 

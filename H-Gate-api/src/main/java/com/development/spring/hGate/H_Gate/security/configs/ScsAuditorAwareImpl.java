@@ -9,16 +9,15 @@ import org.springframework.data.domain.AuditorAware;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class ScsAuditorAwareImpl implements AuditorAware<Long> {
+public class ScsAuditorAwareImpl implements AuditorAware<Integer> {
 
     @Autowired
     private SessionService sessionService;
 
     @Override
-    public Optional<Long> getCurrentAuditor() {
+    public Optional<Integer> getCurrentAuditor() {
         JwtAuthentication jwtAuthentication = sessionService.getCurrentUser();
-        return jwtAuthentication != null
-                ? Optional.of(jwtAuthentication.getId())
-                : Optional.empty();
+        return Optional.ofNullable(jwtAuthentication != null ? jwtAuthentication.getId() : null);
     }
+
 }

@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends CrudRepository<Users, Long> {
+public interface UserRepository extends CrudRepository<Users, Integer> {
 
     @Transactional
     @Query("SELECT u FROM Users u WHERE u.email = :email")

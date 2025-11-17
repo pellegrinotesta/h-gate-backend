@@ -21,7 +21,7 @@ public class PasswordResetToken extends BasicEntity {
     private static final int EXPIRATION = 30; //30 minuti
 
     @Id
-    private Long id;
+    private Integer id;
 
     private String token;
 
@@ -55,12 +55,12 @@ public class PasswordResetToken extends BasicEntity {
     }
 
     @Override
-    public Long getId() {
+    public Integer getId() {
         return this.id;
     }
 
     @Override
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 }

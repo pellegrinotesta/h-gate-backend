@@ -28,11 +28,11 @@ public class ProfileService {
 
     public Users partialUpdate(JwtAuthentication jwtAuthentication, Users userToEdit, String newPassword) {
         var user = userService.getById(jwtAuthentication.getId());
-        if (userToEdit.getPassword() != null) {
-            if (!isUserPasswordCorrect(user.getPassword(), userToEdit.getPassword())) {
+        if (userToEdit.getPasswordHash() != null) {
+            if (!isUserPasswordCorrect(user.getPasswordHash(), userToEdit.getPasswordHash())) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_PASSWORD);
             }
-            userToEdit.setPassword(newPassword);
+            userToEdit.setPasswordHash(newPassword);
         }
         userToEdit.setId(jwtAuthentication.getId());
         return userService.partialUpdate(userToEdit);

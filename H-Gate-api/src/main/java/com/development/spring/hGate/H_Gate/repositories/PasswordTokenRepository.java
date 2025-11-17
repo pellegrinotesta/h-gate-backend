@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface PasswordTokenRepository extends CrudRepository<PasswordResetToken, Long> {
+public interface PasswordTokenRepository extends CrudRepository<PasswordResetToken, Integer> {
 
     List<PasswordResetToken> findByExpiryDateBefore(Date now);
     PasswordResetToken findByToken(String Token);

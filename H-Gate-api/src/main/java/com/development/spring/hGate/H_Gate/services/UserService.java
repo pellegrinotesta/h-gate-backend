@@ -42,8 +42,8 @@ public class UserService extends BasicService {
     private static final String USER_ID_NOT_FOUND = "User with id %d not found.";
 
     private final Map<String, Function<Users, ComparableWrapper>> sortingFields = new HashMap<>() {{
-        put("name", user -> user.getName() != null ? new ComparableWrapper(user.getName()) : null);
-        put("surname", user -> user.getSurname() != null ? new ComparableWrapper(user.getSurname()) : null);
+        put("name", user -> user.getNome() != null ? new ComparableWrapper(user.getNome()) : null);
+        put("surname", user -> user.getCognome() != null ? new ComparableWrapper(user.getCognome()) : null);
         put("roles", user -> user.getRoles() != null ? new ComparableWrapper(user.getRoles()) : null);
     }};
 
@@ -60,19 +60,19 @@ public class UserService extends BasicService {
     public Users create(Users user) {
         user.setId(null);
         String tempPassword = PasswordTokenService.generateRandomString();
-        user.setPassword(tempPassword);
+        user.setPasswordHash(tempPassword);
         Users newUser = save(user);
        // emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
 
         return newUser;
     }
 
-    public Users resetPassword(Long id) {
+    public Users resetPassword(Integer id) {
         Optional<Users> optUser = userRepository.findById(id);
         if (optUser.isPresent()) {
             Users user = optUser.get();
             String tempPassword = PasswordTokenService.generateRandomString();
-            user.setPassword(tempPassword);
+            user.setPasswordHash(tempPassword);
             userRepository.save(user);
             //emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
             return user;
@@ -118,7 +118,7 @@ public class UserService extends BasicService {
         List<Users> filteredUsers = new ArrayList<>();
 
         for (Users user : usersPage.getContent()) {
-            if (!user.getRoles().contains(Role.ADMIN))
+            if (!user.getRoles().contains(Role.AMMINISTRATORE))
                 filteredUsers.add(user);
         }
         return new PageImpl<>(filteredUsers, usersPage.getPageable(), usersPage.getTotalElements());
@@ -158,15 +158,15 @@ public class UserService extends BasicService {
     }
 
     public Users save(Users user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         return save(userRepository, user);
     }
 
-    public Users getById(Long id) {
+    public Users getById(Integer id) {
         return getById(userRepository, id, USER_ID_NOT_FOUND);
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(Integer id) {
         Optional<Users> oldUserOptional = userRepository.findById(id);
 
         if (oldUserOptional.isEmpty())
@@ -183,8 +183,8 @@ public class UserService extends BasicService {
     }
 
     private Users saveFromPartialUpdate(Users oldUser, Users user) {
-        if (user.getPassword() != null) {
-            oldUser.setPassword(passwordEncoder.encode(oldUser.getPassword()));
+        if (user.getPasswordHash() != null) {
+            oldUser.setPasswordHash(passwordEncoder.encode(oldUser.getPasswordHash()));
         }
         try {
             return userRepository.save(oldUser);
@@ -206,13 +206,13 @@ public class UserService extends BasicService {
         }
 
         Set<Role> assignedRoles = new HashSet<>();
-        assignedRoles.add(Role.STAFF);
+        assignedRoles.add(Role.PAZIENTE);
 
         Users user = Users.builder()
-                .name(dto.getName())
-                .surname(dto.getSurname())
+                .nome(dto.getNome())
+                .cognome(dto.getCognome())
                 .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
+                .passwordHash(passwordEncoder.encode(dto.getPasswordHash()))
                 .roles(assignedRoles)
                 .build();
 

@@ -60,7 +60,7 @@ public class UserService extends BasicService {
     public Users create(Users user) {
         user.setId(null);
         String tempPassword = PasswordTokenService.generateRandomString();
-        user.setPasswordHash(tempPassword);
+        user.setPassword(tempPassword);
         Users newUser = save(user);
        // emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
 
@@ -72,7 +72,7 @@ public class UserService extends BasicService {
         if (optUser.isPresent()) {
             Users user = optUser.get();
             String tempPassword = PasswordTokenService.generateRandomString();
-            user.setPasswordHash(tempPassword);
+            user.setPassword(tempPassword);
             userRepository.save(user);
             //emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
             return user;
@@ -158,7 +158,7 @@ public class UserService extends BasicService {
     }
 
     public Users save(Users user) {
-        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return save(userRepository, user);
     }
 
@@ -183,8 +183,8 @@ public class UserService extends BasicService {
     }
 
     private Users saveFromPartialUpdate(Users oldUser, Users user) {
-        if (user.getPasswordHash() != null) {
-            oldUser.setPasswordHash(passwordEncoder.encode(oldUser.getPasswordHash()));
+        if (user.getPassword() != null) {
+            oldUser.setPassword(passwordEncoder.encode(oldUser.getPassword()));
         }
         try {
             return userRepository.save(oldUser);
@@ -212,7 +212,7 @@ public class UserService extends BasicService {
                 .nome(dto.getNome())
                 .cognome(dto.getCognome())
                 .email(dto.getEmail())
-                .passwordHash(passwordEncoder.encode(dto.getPasswordHash()))
+                .password(passwordEncoder.encode(dto.getPasswordHash()))
                 .roles(assignedRoles)
                 .build();
 

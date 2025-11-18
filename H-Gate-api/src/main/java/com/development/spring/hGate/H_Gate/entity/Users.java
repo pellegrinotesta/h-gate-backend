@@ -36,8 +36,8 @@ public class Users extends BasicEntity {
 
     @JsonIgnore
     @NotBlank
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @NotBlank
     @Size(min = 2, max = 100)
@@ -69,10 +69,10 @@ public class Users extends BasicEntity {
     private String cap;
 
     @Column(name = "is_active")
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     @Column(name = "is_verified")
-    private Boolean isVerified = false;
+    private Boolean isVerified;
 
     @Column(name = "verification_token")
     private String verificationToken;
@@ -121,5 +121,4 @@ public class Users extends BasicEntity {
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @JoinTable(name = "roles", joinColumns = @JoinColumn(name = "user_id"))
     private Set<Role> roles;
-
 }

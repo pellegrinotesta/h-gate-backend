@@ -1,8 +1,8 @@
-INSERT INTO users (uuid, email, password_hash, nome, cognome, telefono, data_nascita, citta, provincia)
+INSERT INTO users (uuid, email, password, nome, cognome, telefono, data_nascita, citta, provincia)
 VALUES
-(UUID(), 'mario.rossi@example.com', 'hash_pass_1', 'Mario', 'Rossi', '3451234567', '1980-02-15', 'Milano', 'MI'),
-(UUID(), 'lucia.bianchi@example.com', 'hash_pass_2', 'Lucia', 'Bianchi', '3479876543', '1990-08-22', 'Roma', 'RM'),
-(UUID(), 'giovanni.verdi@example.com', 'hash_pass_3', 'Giovanni', 'Verdi', '3391122334', '1975-11-10', 'Napoli', 'NA');
+(UUID(), 'mario.rossi@example.com', '$2a$10$EGcbnw2xbw39nlYCWyQuc.0Q9GwZxraLr7n8dNmimZNqPACGaiky.', 'Mario', 'Rossi', '3451234567', '1980-02-15', 'Milano', 'MI'),
+(UUID(), 'lucia.bianchi@example.com', '$2a$10$EGcbnw2xbw39nlYCWyQuc.0Q9GwZxraLr7n8dNmimZNqPACGaiky.', 'Lucia', 'Bianchi', '3479876543', '1990-08-22', 'Roma', 'RM'),
+(UUID(), 'giovanni.verdi@example.com', '$2a$10$EGcbnw2xbw39nlYCWyQuc.0Q9GwZxraLr7n8dNmimZNqPACGaiky.', 'Giovanni', 'Verdi', '3391122334', '1975-11-10', 'Napoli', 'NA');
 
 INSERT INTO roles (user_id, role)
 VALUES

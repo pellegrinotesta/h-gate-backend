@@ -2,7 +2,7 @@ CREATE TABLE `users` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `uuid` CHAR(36) UNIQUE NOT NULL DEFAULT (UUID()),
     `email` VARCHAR(255) UNIQUE NOT NULL,
-    `password_hash` VARCHAR(255) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
     `nome` VARCHAR(100) NOT NULL,
     `cognome` VARCHAR(100) NOT NULL,
     `telefono` VARCHAR(20) NULL,

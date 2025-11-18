@@ -25,9 +25,7 @@ public class AuthenticationController {
     public AuthenticationResponseDTO authenticate(@Valid @RequestBody AuthenticationRequestDTO authenticationRequestDTO) {
         Optional<String> authenticationToken = authenticationService.authenticate(
                 authenticationRequestDTO.getUsername(),
-                authenticationRequestDTO.getPassword(),
-                authenticationRequestDTO.getRoles());
-
+                authenticationRequestDTO.getPassword());
         if (authenticationToken.isPresent()) {
             return AuthenticationResponseDTO.builder().authentication(authenticationToken.get()).build();
         } else {

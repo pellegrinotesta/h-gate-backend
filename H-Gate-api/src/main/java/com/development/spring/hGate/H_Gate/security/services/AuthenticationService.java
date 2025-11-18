@@ -31,7 +31,7 @@ public class AuthenticationService {
 
     private Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
-    public Optional<String> authenticate(String username, String password, String roles) {
+    public Optional<String> authenticate(String username, String password) {
         if(loginAttemptService.isBlocked(username))
             throw buildUserIsBlockedException();
 

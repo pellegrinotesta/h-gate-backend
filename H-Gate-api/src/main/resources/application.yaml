@@ -2,6 +2,8 @@ server:
   port: 8080
   error:
     include-message: always
+  servlet:
+    context-path: /h-gate
 
 jasypt:
   encryptor:

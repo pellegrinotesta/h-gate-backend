@@ -6,7 +6,7 @@ public enum Role implements GrantedAuthority {
 
     PAZIENTE,
     MEDICO,
-    AMMINISTRATORE;
+    ADMIN;
 
 
     public String getAuthority() {

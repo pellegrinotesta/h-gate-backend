@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,6 +27,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfigurer {
 
     private final List<String> allowedOrigins;
@@ -40,7 +44,9 @@ public class WebSecurityConfigurer {
         this.allowedOrigins = allowedOrigins;
         this.userDetailsService = userDetailsService;
         this.authorizationFilter = authorizationFilter;
-        logger.info(String.format("Allowed Origins: %s", allowedOrigins.toString()));
+        if (logger.isInfoEnabled()) {
+            logger.info("Allowed Origins: {}", allowedOrigins.toString());
+        }
     }
 
     @Bean
@@ -50,32 +56,26 @@ public class WebSecurityConfigurer {
         return authenticationManagerBuilder.build();
     }
 
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable) // ✅ nuovo modo
-                )
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/authentication").permitAll()
-                        .requestMatchers("/version/").permitAll()
-                        .requestMatchers("/password/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                .cors(c -> c.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers("/authentication", "/version",
+                                "/password/**", "/error", "/*/imports/events",
+                                "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http.addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -88,9 +88,10 @@ public class WebSecurityConfigurer {
         corsConfiguration.setAllowedOrigins(allowedOrigins);
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
-        corsConfiguration.setMaxAge(1800L); // 30 minuti
+        corsConfiguration.setMaxAge(1800L); // 30 min
         final var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
+
 }

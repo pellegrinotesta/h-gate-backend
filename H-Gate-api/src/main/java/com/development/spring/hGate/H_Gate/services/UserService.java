@@ -118,7 +118,7 @@ public class UserService extends BasicService {
         List<Users> filteredUsers = new ArrayList<>();
 
         for (Users user : usersPage.getContent()) {
-            if (!user.getRoles().contains(Role.AMMINISTRATORE))
+            if (!user.getRoles().contains(Role.ADMIN))
                 filteredUsers.add(user);
         }
         return new PageImpl<>(filteredUsers, usersPage.getPageable(), usersPage.getTotalElements());

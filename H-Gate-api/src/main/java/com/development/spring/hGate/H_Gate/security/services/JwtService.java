@@ -86,15 +86,12 @@ public class JwtService {
     }
 
     private String buildToken(String subject, Map<String, Object> claims) {
-        // Ensure the key is at least 256 bits (32 bytes)
-        SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
         String jwt = Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtServiceConfig.getTokenDurationMs()))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(SignatureAlgorithm.HS256, jwtServiceConfig.getSecretKey())
                 .compact();
 
         return cryptoService.encrypt(jwt);

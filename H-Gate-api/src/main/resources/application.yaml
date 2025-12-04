@@ -2,8 +2,6 @@ server:
   port: 8080
   error:
     include-message: always
-  servlet:
-    context-path: /h-gate
 
 jasypt:
   encryptor:
@@ -42,8 +40,8 @@ spring:
 
 application:
   jwt:
-    secretKey: ENC(gN+XcNwye0GV5CQjnKRAJAmce/+wNUahuPlBjB4GvlKMjWehW084QCt9qW6KFSvqhgkqlEH1dw9rZ7H1HIiERA==)
-    cryptoKey: ENC(DnEMgOMxAvci3GmBVCh3DdyTP1Bp+h7d5gJjQU2y+06Lue5FlnatRo6L+g5IMluFiIHvlQHQmaE8QOkNnAXgIg==)
+    secretKey: dsalkjdjkfjklafojlkas7jklfjkadlnjfanjfnjkladsjklfjlkaenklfankljodsaf0ji
+    cryptoKey: Qs23RBNF330ms00n
 
     tokenDurationMs: 1800000
     tokenRenewBeforeExpirationMs: 1800000

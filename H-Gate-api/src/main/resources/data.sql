@@ -8,7 +8,7 @@ INSERT INTO roles (user_id, role)
 VALUES
 (1, 'MEDICO'),
 (2, 'PAZIENTE'),
-(3, 'AMMINISTRATORE');
+(3, 'ADMIN');
 
 INSERT INTO medici (user_id, specializzazione, numero_albo, universita, anno_laurea, bio, durata_visita_minuti, pausa_tra_visite_minuti)
 VALUES

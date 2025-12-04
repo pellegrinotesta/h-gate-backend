@@ -31,7 +31,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         JwtAuthentication jwtAuthentication = jwtService.deserialize(jwt);
         jwtAuthentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         jwtAuthentication.setAuthenticated(true);
-        return null;
+        return jwtAuthentication;
     }
 
     private Authentication getAuthenticationFromContext() {
@@ -43,7 +43,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     }
 
     private boolean isAuthenticationNeeded(String jwt) {
-        return jwt.length() > 0 &&
+        return !jwt.isEmpty() &&
                 getAuthenticationFromContext() == null &&
                jwtService.isTokenWellFormed(jwt) &&
                jwtService.isTokenNotExpired(jwt);

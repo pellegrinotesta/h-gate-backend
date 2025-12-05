@@ -25,6 +25,10 @@ import java.util.List;
 @Table(name = "medici")
 public class Medico extends BasicEntity {
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
+
     @NotBlank
     @Column(nullable = false, length = 100)
     private String specializzazione;

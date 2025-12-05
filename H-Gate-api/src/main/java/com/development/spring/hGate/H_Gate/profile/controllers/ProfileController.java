@@ -6,10 +6,8 @@ import com.development.spring.hGate.H_Gate.mappers.UserMapper;
 import com.development.spring.hGate.H_Gate.profile.dtos.PatchProfileDTO;
 import com.development.spring.hGate.H_Gate.profile.service.ProfileService;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
-import com.development.spring.hGate.H_Gate.security.services.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

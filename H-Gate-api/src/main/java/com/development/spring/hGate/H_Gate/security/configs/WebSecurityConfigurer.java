@@ -63,7 +63,7 @@ public class WebSecurityConfigurer {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/authentication", "/version",
+                        .requestMatchers("/authentication", "/registration", "/version",
                                 "/password/**", "/error", "/*/imports/events",
                                 "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()

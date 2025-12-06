@@ -15,6 +15,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,7 +55,7 @@ public class Users extends BasicEntity {
     private String telefono;
 
     @Column(name = "data_nascita")
-    private LocalDate dataNascita;
+    private Date dataNascita;
 
     @Column(columnDefinition = "TEXT")
     private String indirizzo;
@@ -84,15 +85,15 @@ public class Users extends BasicEntity {
     private LocalDateTime resetPasswordExpires;
 
     @Column(name = "ultimo_accesso")
-    private LocalDateTime ultimoAccesso;
+    private Date ultimoAccesso;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private Date createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 
     // Metodi helper
     @PrePersist

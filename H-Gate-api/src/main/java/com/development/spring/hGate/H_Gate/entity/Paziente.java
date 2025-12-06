@@ -23,6 +23,10 @@ import java.util.List;
 @Table(name = "pazienti")
 public class Paziente extends BasicEntity {
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
+
     @Column(name = "codice_fiscale", unique = true, nullable = false, length = 16)
     @Size(min = 16, max = 16)
     private String codiceFiscale;

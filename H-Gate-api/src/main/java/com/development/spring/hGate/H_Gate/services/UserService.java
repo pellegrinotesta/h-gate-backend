@@ -8,7 +8,6 @@ import com.development.spring.hGate.H_Gate.libs.utils.ComparableWrapper;
 import com.development.spring.hGate.H_Gate.libs.utils.Pair;
 import com.development.spring.hGate.H_Gate.mappers.UserMapper;
 import com.development.spring.hGate.H_Gate.repositories.UserRepository;
-import com.development.spring.hGate.H_Gate.security.services.LoginAttemptService;
 import com.development.spring.hGate.H_Gate.security.services.SessionService;
 import com.development.spring.hGate.H_Gate.shared.models.Role;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
@@ -32,13 +31,11 @@ import java.util.function.Function;
 @Service
 public class UserService extends BasicService {
 
-    private final LoginAttemptService loginAttemptService;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserSpecificationsFactory userSpecificationsFactory;
-    private final EmailService emailService;
     private static final String USER_ID_NOT_FOUND = "User with id %d not found.";
 
     private final Map<String, Function<Users, ComparableWrapper>> sortingFields = new HashMap<>() {{
@@ -47,22 +44,19 @@ public class UserService extends BasicService {
         put("roles", user -> user.getRoles() != null ? new ComparableWrapper(user.getRoles()) : null);
     }};
 
-
-    public UserService(LoginAttemptService loginAttemptService, UserMapper userMapper, SessionService sessionService, UserRepository userRepository, PasswordEncoder passwordEncoder, UserSpecificationsFactory userSpecificationsFactory, EmailService emailService) {
+    public UserService(UserMapper userMapper, SessionService sessionService, UserRepository userRepository, PasswordEncoder passwordEncoder, UserSpecificationsFactory userSpecificationsFactory ) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userSpecificationsFactory = userSpecificationsFactory;
-        this.emailService = emailService;
-        this.loginAttemptService = loginAttemptService;
     }
 
-    public Users create(Users user) {
-        user.setId(null);
-        String tempPassword = PasswordTokenService.generateRandomString();
-        user.setPassword(tempPassword);
-        Users newUser = save(user);
-       // emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
+    public Users create(UserRegistrationDTO user) {
+        Users newUser = null;
+        if(user != null) {
+           newUser = new Users();
+           newUser.setCreatedAt(new Date());
+        }
 
         return newUser;
     }
@@ -200,34 +194,6 @@ public class UserService extends BasicService {
         return optionalUser.isPresent();
     }
 
-    public Users firstRegistration(UserRegistrationDTO dto) {
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already in use.");
-        }
 
-        Set<Role> assignedRoles = new HashSet<>();
-        assignedRoles.add(Role.PAZIENTE);
-
-        Users user = Users.builder()
-                .nome(dto.getNome())
-                .cognome(dto.getCognome())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPasswordHash()))
-                .roles(assignedRoles)
-                .build();
-
-//        Cliente cliente = Cliente.builder()
-//                .codiceFiscale(dto.getCodiceFiscale())
-//                .dataRegistrazione(new Date())
-//                .indirizzo(dto.getIndirizzo())
-//                .telefono(dto.getTelefono())
-//                .dataNascita(dto.getDataNascita())
-//                .user(user)
-//                .build();
-//
-//        user.setCliente(cliente);
-
-        return save(user);
-    }
 
 }

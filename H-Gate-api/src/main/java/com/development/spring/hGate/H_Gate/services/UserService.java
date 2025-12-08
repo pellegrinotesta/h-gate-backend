@@ -1,6 +1,7 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.components.UserSpecificationsFactory;
+import com.development.spring.hGate.H_Gate.dtos.UserDTO;
 import com.development.spring.hGate.H_Gate.dtos.UserRegistrationDTO;
 import com.development.spring.hGate.H_Gate.entity.Users;
 import com.development.spring.hGate.H_Gate.libs.data.models.Filter;
@@ -124,14 +125,24 @@ public class UserService extends BasicService {
         return userFilter.toSpecification(userSpecificationsFactory);
     }
 
-    public Users update(Users user) {
+    public Users update(Users userUpdate) {
 
-        Optional<Users> oldUserOptional = userRepository.findById(user.getId());
-        if (oldUserOptional.isEmpty())
-            throw buildEntityWithIdNotFoundException(user.getId(), USER_ID_NOT_FOUND);
+        Users existing = userRepository.findById(userUpdate.getId())
+                .orElseThrow(() -> buildEntityWithIdNotFoundException(userUpdate.getId(), USER_ID_NOT_FOUND));
 
-        return save(user);
+        existing.setNome(userUpdate.getNome());
+        existing.setCognome(userUpdate.getCognome());
+        existing.setEmail(userUpdate.getEmail());
+        existing.setTelefono(userUpdate.getTelefono());
+        existing.setIndirizzo(userUpdate.getIndirizzo());
+        existing.setCitta(userUpdate.getCitta());
+        existing.setProvincia(userUpdate.getProvincia());
+        existing.setCap(userUpdate.getCap());
+        existing.setDataNascita(userUpdate.getDataNascita());
+
+        return userRepository.save(existing);
     }
+
 
     public Users partialUpdate(Users user) {
 
@@ -187,11 +198,6 @@ public class UserService extends BasicService {
             logger.debug(message);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
         }
-    }
-
-    public boolean existsByUserId(Long userId){
-        Optional<Users> optionalUser = userRepository.findByUserId(userId);
-        return optionalUser.isPresent();
     }
 
 

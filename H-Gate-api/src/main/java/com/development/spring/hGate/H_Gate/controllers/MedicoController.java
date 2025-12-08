@@ -2,13 +2,13 @@ package com.development.spring.hGate.H_Gate.controllers;
 
 import com.development.spring.hGate.H_Gate.dtos.MedicoDTO;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
+import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.mappers.MedicoMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.MedicoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +28,21 @@ public class MedicoController {
             res.setOk(false);
             res.setMessage(ex.getMessage());
         }
+        return res;
+    }
+
+    @PutMapping("/update")
+    public ResponseDTO<MedicoDTO> update(@Valid @RequestBody Medico medico) {
+        ResponseDTO<MedicoDTO> res = new ResponseDTO<>();
+
+        try {
+            res.setOk(true);
+            res.setData(medicoMapper.convertModelToDTO(medicoService.update(medico)));
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
         return res;
     }
 }

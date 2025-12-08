@@ -1,6 +1,5 @@
 package com.development.spring.hGate.H_Gate.services;
 
-
 import com.development.spring.hGate.H_Gate.dtos.UserRegistrationDTO;
 import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.entity.Paziente;
@@ -12,8 +11,6 @@ import com.development.spring.hGate.H_Gate.repositories.UserRepository;
 import com.development.spring.hGate.H_Gate.shared.models.Role;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +72,7 @@ public class RegistrationService extends BasicService {
         Paziente paziente = Paziente.builder()
                 .user(user)
                 .codiceFiscale(dto.getCodiceFiscale())
-                .gruppoSanguigno(parseGruppoSanguigno(dto.getGruppoSanguigno()))
+                .gruppoSanguigno(dto.getGruppoSanguigno())
                 .altezzaCm(parseInteger(dto.getAltezzaCm()))
                 .allergie(dto.getAllergie())
                 .noteMediche(dto.getPatologieCroniche())
@@ -195,6 +192,5 @@ public class RegistrationService extends BasicService {
     public boolean isNumeroAlboAvailable(String numeroAlbo) {
         return !medicoRepository.existsByNumeroAlbo(numeroAlbo);
     }
-
 
 }

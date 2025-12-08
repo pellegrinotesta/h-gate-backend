@@ -5,10 +5,7 @@ import com.development.spring.hGate.H_Gate.shared.entities.BasicEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@ToString(exclude = {"prenotazioni", "referti", "recensioni", "medicoBase"})
 @Entity
 @Builder
 @NoArgsConstructor
@@ -23,7 +21,7 @@ import java.util.List;
 @Table(name = "pazienti")
 public class Paziente extends BasicEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
@@ -31,9 +29,8 @@ public class Paziente extends BasicEntity {
     @Size(min = 16, max = 16)
     private String codiceFiscale;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "gruppo_sanguigno", length = 3)
-    private GruppoSanguignoEnum gruppoSanguigno;
+    private String gruppoSanguigno;
 
     @Column(name = "altezza_cm")
     @Min(50)

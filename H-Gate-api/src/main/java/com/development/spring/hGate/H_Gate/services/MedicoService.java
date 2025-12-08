@@ -13,7 +13,22 @@ public class MedicoService extends BasicService {
 
     private final MedicoRepository medicoRepository;
 
+    private static final String MEDICO_ID_NOT_FOUND = "Medico with id %d not found.";
+
     public Medico findMedicoByUserId(JwtAuthentication jwtAuthentication) {
         return medicoRepository.findMedicoByUserId(jwtAuthentication.getId());
+    }
+
+    public Medico update(Medico medico) {
+        Medico medicoExisting = medicoRepository.findById(medico.getId()).orElseThrow(() -> buildEntityWithIdNotFoundException(medico.getId(), MEDICO_ID_NOT_FOUND));
+
+        medicoExisting.setAnnoLaurea(medico.getAnnoLaurea());
+        medicoExisting.setBio(medico.getBio());
+        medicoExisting.setCurriculum(medico.getCurriculum());
+        medicoExisting.setDurataVisitaMinuti(medico.getDurataVisitaMinuti());
+        medicoExisting.setNumeroAlbo(medico.getNumeroAlbo());
+        medicoExisting.setUniversita(medico.getUniversita());
+
+        return medicoRepository.save(medicoExisting);
     }
 }

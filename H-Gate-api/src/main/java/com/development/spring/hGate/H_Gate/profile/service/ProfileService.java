@@ -1,5 +1,7 @@
 package com.development.spring.hGate.H_Gate.profile.service;
 
+
+import com.development.spring.hGate.H_Gate.dtos.UserDTO;
 import com.development.spring.hGate.H_Gate.entity.Users;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.UserService;
@@ -40,6 +42,10 @@ public class ProfileService {
 
     private boolean isUserPasswordCorrect(String encodedPassword, String rawPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    public Users updateGeneralInfo(Users users) {
+      return userService.update(users);
     }
 
 }

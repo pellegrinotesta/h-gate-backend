@@ -5,9 +5,15 @@ import com.development.spring.hGate.H_Gate.libs.data.repositories.CrudRepository
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface MedicoRepository extends CrudRepository<Medico, Integer> {
 
     @Query("SELECT m FROM Medico m WHERE m.user.id = :id")
     Medico findMedicoByUserId(Integer id);
+
+    boolean existsByNumeroAlbo(String numeroAlbo);
+
+    Optional<Medico> findByNumeroAlbo(String numeroAlbo);
 }

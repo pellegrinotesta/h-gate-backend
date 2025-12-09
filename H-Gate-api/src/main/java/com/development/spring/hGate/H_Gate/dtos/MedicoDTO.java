@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class MedicoDTO {
 
+    private Integer id;
     private String specializzazione;
     private String numeroAlbo;
     private String universita;

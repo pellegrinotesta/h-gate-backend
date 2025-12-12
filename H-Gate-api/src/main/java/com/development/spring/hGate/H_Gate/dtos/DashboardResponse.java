@@ -17,4 +17,5 @@ import java.util.List;
 public class DashboardResponse {
 
     private List<VPrenotazioniDettagliate> prenotazioni;
+    private List<RefertoDTO> referti;
 }

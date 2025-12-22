@@ -1,10 +1,12 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
-import com.development.spring.hGate.H_Gate.dtos.DashboardResponse;
+import com.development.spring.hGate.H_Gate.dtos.DashboardMedicoResponse;
+import com.development.spring.hGate.H_Gate.dtos.DashboardPazienteResponse;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.DashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,8 +20,9 @@ public class DashboardController {
 
 
     @GetMapping("/paziente")
-    public ResponseDTO<DashboardResponse> dashboardPaziente(JwtAuthentication jwtAuthentication) {
-        ResponseDTO<DashboardResponse> res = new ResponseDTO<>();
+    @PreAuthorize("hasAuthority('PAZIENTE')")
+    public ResponseDTO<DashboardPazienteResponse> dashboardPaziente(JwtAuthentication jwtAuthentication) {
+        ResponseDTO<DashboardPazienteResponse> res = new ResponseDTO<>();
         try{
 
             res.setOk(true);
@@ -29,6 +32,22 @@ public class DashboardController {
             res.setOk(false);
             res.setMessage(ex.getMessage());
         }
+        return res;
+    }
+
+    @GetMapping("/medico")
+    @PreAuthorize("hasAuthority('MEDICO')")
+    public ResponseDTO<DashboardMedicoResponse> dashboardMedico(JwtAuthentication jwtAuthentication) {
+        ResponseDTO<DashboardMedicoResponse> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(dashboardService.dashboardMedico(jwtAuthentication.getId()));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
         return res;
     }
 }

@@ -14,8 +14,12 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class DashboardResponse {
+public class DashboardPazienteResponse {
 
+    private Integer prossimiAppuntamenti;
+    private Integer refertiDisponibili;
+    private Integer mediciSeguiti;
+    private Integer visiteTotali;
     private List<VPrenotazioniDettagliate> prenotazioni;
     private List<RefertoDTO> referti;
 }

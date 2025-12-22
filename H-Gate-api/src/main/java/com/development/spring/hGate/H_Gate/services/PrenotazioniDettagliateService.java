@@ -1,7 +1,7 @@
 package com.development.spring.hGate.H_Gate.services;
 
-import com.development.spring.hGate.H_Gate.dtos.PrenotazioneDTO;
-import com.development.spring.hGate.H_Gate.entity.VPrenotazioniDettagliate;
+import com.development.spring.hGate.H_Gate.dtos.*;
+import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.development.spring.hGate.H_Gate.repositories.PrenotazioniDettagliateRepository;
 import com.development.spring.hGate.H_Gate.repositories.RefertoRepository;
@@ -53,8 +53,77 @@ public class PrenotazioniDettagliateService extends BasicService {
         return prenotazioniDettagliateRepository.countByMedicoUserIdAndStato(medicoUserId, StatoPrenotazioneEnum.COMPLETATA.name());
     }
 
-//    public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId){
-//        return prenotazioniDettagliateRepository.
-//    }
+    public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId){
+        // Visite oggi
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        List<VPrenotazioniDettagliate>  prenotazioniDettagliate = prenotazioniDettagliateRepository.findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(medicoUserId, startOfDay, endOfDay, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+
+        return prenotazioniDettagliate.stream().map(this::mapToPrenotazioneDTO).toList();
+    }
+
+
+    private PrenotazioneDTO mapToPrenotazioneDTO(VPrenotazioniDettagliate prenotazione) {
+        return PrenotazioneDTO.builder()
+                .numeroPrenotazione(prenotazione.getNumeroPrenotazione())
+                .dataOra(prenotazione.getDataOra())
+                .dataOraFine(prenotazione.getDataOraFine())
+                .tipoVisita(prenotazione.getTipoVisita())
+                .stato(prenotazione.getStato())
+                .costo(prenotazione.getCosto())
+                .paziente(PazienteMinDTO.builder()
+                        .nome(prenotazione.getPazienteNome())
+                        .codiceFiscale(prenotazione.getPazienteCf())
+                        .email(prenotazione.getPazienteEmail())
+                        .build())
+//                .medico(mapToMedicoMinDTO(prenotazione.getMedico()))
+                .build();
+    }
+
+    private RefertoDTO mapToRefertoDTO(Referto referto) {
+        return RefertoDTO.builder()
+                .titolo(referto.getTitolo())
+                .dataEmissione(referto.getDataEmissione())
+                .tipoReferto(referto.getTipoReferto())
+                .diagnosi(referto.getDiagnosi())
+//                .hasAllegati(!referto.getAllegati().isEmpty())
+//                .medico(mapToMedicoMinDTO(referto.getMedico()))
+                .build();
+    }
+
+    private PazienteMinDTO mapToPazienteMinDTO(Paziente paziente) {
+        return PazienteMinDTO.builder()
+                .id(paziente.getId())
+                .nome(paziente.getUser().getNome())
+                .cognome(paziente.getUser().getCognome())
+                .codiceFiscale(paziente.getCodiceFiscale())
+                .email(paziente.getUser().getEmail())
+                .build();
+    }
+
+    private MedicoMinDTO mapToMedicoMinDTO(Medico medico) {
+        return MedicoMinDTO.builder()
+                .id(medico.getId())
+                .nome(medico.getUser().getNome())
+                .cognome(medico.getUser().getCognome())
+                .specializzazione(medico.getSpecializzazione())
+                .email(medico.getUser().getEmail())
+                .ratingMedio(medico.getRatingMedio())
+                .build();
+    }
+
+    private MedicoDaVerificareDTO mapToMedicoDaVerificareDTO(Medico medico) {
+        return MedicoDaVerificareDTO.builder()
+                .id(medico.getId())
+                .nome(medico.getUser().getNome())
+                .cognome(medico.getUser().getCognome())
+                .email(medico.getUser().getEmail())
+                .specializzazione(medico.getSpecializzazione())
+                .numeroAlbo(medico.getNumeroAlbo())
+                .universita(medico.getUniversita())
+                .annoLaurea(medico.getAnnoLaurea())
+                .hasDocuments(true)
+                .build();
+    }
 
 }

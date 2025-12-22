@@ -1,11 +1,10 @@
 package com.development.spring.hGate.H_Gate.dtos;
 
-import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Setter
 @Getter
@@ -19,23 +18,24 @@ public class PrenotazioneDTO {
 
     private String uuid;
     private String numeroPrenotazione;
-    private PazienteDTO paziente;
+    private PazienteMinDTO paziente;
     private MedicoDTO medico;
-    private LocalDateTime dataOra;
-    private LocalDateTime dataOraFine;
+    private Date dataOra;
+    private Date dataOraFine;
     private String tipoVisita;
-    private StatoPrenotazioneEnum stato = StatoPrenotazioneEnum.IN_ATTESA;
+    private String stato;
     private BigDecimal costo;
+    private String notePaziente;
     private String noteMedico;
     private String motivoAnnullamento;
     private UserDTO annullataDa;
-    private LocalDateTime dataAnnullamento;
+    private Date dataAnnullamento;
     private Boolean promemoriaInviato = false;
     private Boolean confermaInviata = false;
     private Boolean isPrimaVisita = false;
     private Boolean isUrgente = false;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Date createdAt;
+    private Date updatedAt;
     private RefertoDTO referto;
 //    private RecensioneDTO recensione;
 //    private List<PagamentoDTO> pagamenti = new ArrayList<>();

@@ -17,6 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,11 +46,11 @@ public class Prenotazione extends BasicEntity {
 
     @NotNull
     @Column(name = "data_ora", nullable = false)
-    private LocalDateTime dataOra;
+    private Date dataOra;
 
     @NotNull
     @Column(name = "data_ora_fine", nullable = false)
-    private LocalDateTime dataOraFine;
+    private Date dataOraFine;
 
     @NotBlank
     @Column(name = "tipo_visita", nullable = false, length = 100)
@@ -75,6 +76,7 @@ public class Prenotazione extends BasicEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "annullata_da")
+    @JsonIgnore
     private Users annullataDa;
 
     @Column(name = "data_annullamento")

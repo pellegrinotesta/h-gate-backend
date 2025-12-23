@@ -3,6 +3,7 @@ package com.development.spring.hGate.H_Gate.controllers;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
 import com.development.spring.hGate.H_Gate.dtos.UserDTO;
 import com.development.spring.hGate.H_Gate.mappers.UserMapper;
+import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +17,12 @@ public class UserController {
     private final UserMapper userMapper;
 
 
-    @GetMapping("/{id}")
-    public ResponseDTO<UserDTO> getById(@PathVariable("id") Integer id) {
+    @GetMapping("/me")
+    public ResponseDTO<UserDTO> getById(JwtAuthentication jwtAuthentication) {
         ResponseDTO<UserDTO> res = new ResponseDTO<>();
         try {
             res.setOk(true);
-            res.setData(userMapper.convertModelToDTO(userService.getById(id)));
+            res.setData(userMapper.convertModelToDTO(userService.getById(jwtAuthentication.getId())));
 
         } catch (Exception ex) {
             res.setOk(false);

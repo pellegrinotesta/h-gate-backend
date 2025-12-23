@@ -76,6 +76,7 @@ public class Prenotazione extends BasicEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "annullata_da")
+    @JsonIgnore
     private Users annullataDa;
 
     @Column(name = "data_annullamento")

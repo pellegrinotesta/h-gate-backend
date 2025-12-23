@@ -1,5 +1,6 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
+import com.development.spring.hGate.H_Gate.dtos.DashboardAdminResponse;
 import com.development.spring.hGate.H_Gate.dtos.DashboardMedicoResponse;
 import com.development.spring.hGate.H_Gate.dtos.DashboardPazienteResponse;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
@@ -42,6 +43,23 @@ public class DashboardController {
         try {
             res.setOk(true);
             res.setData(dashboardService.dashboardMedico(jwtAuthentication.getId()));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseDTO<DashboardAdminResponse> dashboardAdmin(JwtAuthentication jwtAuthentication) {
+        ResponseDTO<DashboardAdminResponse> res = new ResponseDTO<>();
+        try {
+
+            res.setOk(true);
+            res.setData(dashboardService.dashboardAdmin(jwtAuthentication.getId()));
 
         } catch (Exception ex) {
             res.setOk(false);

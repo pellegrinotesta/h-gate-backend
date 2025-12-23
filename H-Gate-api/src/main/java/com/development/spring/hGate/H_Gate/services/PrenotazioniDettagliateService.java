@@ -3,6 +3,8 @@ package com.development.spring.hGate.H_Gate.services;
 import com.development.spring.hGate.H_Gate.dtos.*;
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
+import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
+import com.development.spring.hGate.H_Gate.repositories.PrenotazioneRepository;
 import com.development.spring.hGate.H_Gate.repositories.PrenotazioniDettagliateRepository;
 import com.development.spring.hGate.H_Gate.repositories.RefertoRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class PrenotazioniDettagliateService extends BasicService {
 
     private final PrenotazioniDettagliateRepository prenotazioniDettagliateRepository;
     private final RefertoRepository refertoRepository;
+    private final MedicoRepository medicoRepository;
 
     public List<VPrenotazioniDettagliate> prenotazioniPaziente(Integer pazienteId) {
         return prenotazioniDettagliateRepository.findTop5ByPazienteUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(pazienteId, new Date(), List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));    }
@@ -60,6 +64,14 @@ public class PrenotazioniDettagliateService extends BasicService {
         List<VPrenotazioniDettagliate>  prenotazioniDettagliate = prenotazioniDettagliateRepository.findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(medicoUserId, startOfDay, endOfDay, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
 
         return prenotazioniDettagliate.stream().map(this::mapToPrenotazioneDTO).toList();
+    }
+
+    public List<MedicoDaVerificareDTO> mediciInAttesa() {
+        return medicoRepository
+                .findByIsVerificatoFalse()
+                .stream()
+                .map(this::mapToMedicoDaVerificareDTO)
+                .collect(Collectors.toList());
     }
 
 

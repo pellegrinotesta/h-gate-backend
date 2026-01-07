@@ -106,10 +106,7 @@ public class PrenotazioniDettagliateService extends BasicService {
     private PazienteMinDTO mapToPazienteMinDTO(Paziente paziente) {
         return PazienteMinDTO.builder()
                 .id(paziente.getId())
-                .nome(paziente.getUser().getNome())
-                .cognome(paziente.getUser().getCognome())
                 .codiceFiscale(paziente.getCodiceFiscale())
-                .email(paziente.getUser().getEmail())
                 .build();
     }
 

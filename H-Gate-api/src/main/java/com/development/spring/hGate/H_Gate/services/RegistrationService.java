@@ -70,7 +70,6 @@ public class RegistrationService extends BasicService {
 
     private void createPaziente(UserRegistrationDTO dto, Users user) {
         Paziente paziente = Paziente.builder()
-                .user(user)
                 .codiceFiscale(dto.getCodiceFiscale())
                 .gruppoSanguigno(dto.getGruppoSanguigno())
                 .altezzaCm(parseInteger(dto.getAltezzaCm()))

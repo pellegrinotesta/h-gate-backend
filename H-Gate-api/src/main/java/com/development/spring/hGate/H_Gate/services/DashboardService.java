@@ -49,7 +49,7 @@ public class DashboardService extends BasicService {
         BigDecimal fatturatoMensile = prenotazioneService.fatturatoMensile();
 
       return DashboardAdminResponse.builder()
-              .pazientiAttivi(pazienteRepository.countByIsActive(true))
+//              .pazientiAttivi(pazienteRepository.countByIsActive(true))
               .mediciAttivi(medicoRepository.countByIsDisponibile(true))
               .statistiche(prenotazioneService.getStatisticheGenerali())
               .prenotazioniOggi(prenotazioneService.prenotazioniOggi())

@@ -21,14 +21,12 @@ public class DashboardController {
 
 
     @GetMapping("/paziente")
-    @PreAuthorize("hasAuthority('PAZIENTE')")
+    @PreAuthorize("hasAuthority('PAZIENTE', 'TUTORE')")
     public ResponseDTO<DashboardPazienteResponse> dashboardPaziente(JwtAuthentication jwtAuthentication) {
         ResponseDTO<DashboardPazienteResponse> res = new ResponseDTO<>();
         try{
-
             res.setOk(true);
             res.setData(dashboardService.dashboardPaziente(jwtAuthentication.getId()));
-
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());

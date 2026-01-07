@@ -18,20 +18,20 @@ public class PazienteController {
     private final PazienteService pazienteService;
     private final PazienteMapper pazienteMapper;
 
-    @GetMapping("/user-id")
-    public ResponseDTO<PazienteDTO> findByUserId(JwtAuthentication jwtAuthentication) {
-        ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(pazienteMapper.convertModelToDTO(pazienteService.findByUserId(jwtAuthentication)));
-
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
-
-        return res;
-    }
+//    @GetMapping("/user-id")
+//    public ResponseDTO<PazienteDTO> findByUserId(JwtAuthentication jwtAuthentication) {
+//        ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
+//        try {
+//            res.setOk(true);
+//            res.setData(pazienteMapper.convertModelToDTO(pazienteService.findByUserId(jwtAuthentication)));
+//
+//        } catch (Exception ex) {
+//            res.setOk(false);
+//            res.setMessage(ex.getMessage());
+//        }
+//
+//        return res;
+//    }
 
     @PutMapping("/update")
     public ResponseDTO<PazienteDTO> update(@Valid @RequestBody Paziente paziente) {

@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public interface PazienteRepository extends CrudRepository<Paziente, Integer> {
 
-////    @Query("SELECT p FROM Paziente p JOIN   WHERE p.user.id = :userId")
-//    Paziente findByUserId(Integer userId);
+    @Query("SELECT p FROM Paziente p JOIN PazienteTutore pt ON pt.paziente.id = p.id JOIN Users u ON u.id = pt.tutore.user.id  WHERE pt.tutore.user.id = :userId")
+    Paziente findByUserId(Integer userId);
 
     boolean existsByCodiceFiscale(String codiceFiscale);
 

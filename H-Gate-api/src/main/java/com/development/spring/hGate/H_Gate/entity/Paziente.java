@@ -1,6 +1,5 @@
 package com.development.spring.hGate.H_Gate.entity;
 
-import com.development.spring.hGate.H_Gate.enums.GruppoSanguignoEnum;
 import com.development.spring.hGate.H_Gate.shared.entities.BasicEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -20,6 +19,17 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "pazienti")
 public class Paziente extends BasicEntity {
+
+    @Column(name = "nome")
+    private String nome;
+
+    @Column(name = "cognome")
+    private String cognome;
+
+    @Column(name = "sesso")
+    private String sesso;
+
+
 
     @Column(name = "codice_fiscale", unique = true, nullable = false, length = 16)
     @Size(min = 16, max = 16)

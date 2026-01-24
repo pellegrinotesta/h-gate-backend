@@ -103,12 +103,12 @@ public class PrenotazioniDettagliateService extends BasicService {
                 .build();
     }
 
-    private PazienteMinDTO mapToPazienteMinDTO(Paziente paziente) {
-        return PazienteMinDTO.builder()
-                .id(paziente.getId())
-                .codiceFiscale(paziente.getCodiceFiscale())
-                .build();
-    }
+//    private PazienteMinDTO mapToPazienteMinDTO(Paziente paziente) {
+//        return PazienteMinDTO.builder()
+//                .id(paziente.getId())
+//                .codiceFiscale(paziente.getCodiceFiscale())
+//                .build();
+//    }
 
     private MedicoMinDTO mapToMedicoMinDTO(Medico medico) {
         return MedicoMinDTO.builder()

@@ -9,6 +9,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -29,7 +30,11 @@ public class Paziente extends BasicEntity {
     @Column(name = "sesso")
     private String sesso;
 
+    @Column(name="data_nascita")
+    private Date dataNascita;
 
+    @Column(name="citta")
+    private String citta;
 
     @Column(name = "codice_fiscale", unique = true, nullable = false, length = 16)
     @Size(min = 16, max = 16)

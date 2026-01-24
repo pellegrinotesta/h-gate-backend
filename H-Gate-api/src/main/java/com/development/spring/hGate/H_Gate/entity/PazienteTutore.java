@@ -1,6 +1,7 @@
 package com.development.spring.hGate.H_Gate.entity;
 
 import com.development.spring.hGate.H_Gate.entity.identifies.PazienteTutoreId;
+import com.development.spring.hGate.H_Gate.libs.data.models.IdentifiableEntity;
 import com.development.spring.hGate.H_Gate.shared.entities.BasicEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "pazienti_tutori")
-public class PazienteTutore {
+public class PazienteTutore implements IdentifiableEntity<PazienteTutoreId> {
 
     @EmbeddedId
     private PazienteTutoreId id;

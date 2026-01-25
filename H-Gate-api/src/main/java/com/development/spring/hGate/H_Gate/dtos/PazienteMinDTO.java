@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -40,7 +39,7 @@ public class PazienteMinDTO {
     // Campi opzionali sanitari
     private String gruppoSanguigno;
     private BigDecimal pesoKg;
-    private Double altezzaCm;
+    private Integer altezzaCm;
     private String allergie;
     private String patologieCroniche;
     private String noteMediche;

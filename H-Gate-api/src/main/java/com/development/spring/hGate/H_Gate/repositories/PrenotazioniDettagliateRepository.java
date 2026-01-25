@@ -14,6 +14,9 @@ import java.util.List;
 @Repository
 public interface PrenotazioniDettagliateRepository extends CrudRepository<VPrenotazioniDettagliate, Integer> {
 
+    //Query tutore
+
+
     // Query Pazienti
      Integer countByPazienteUserIdAndDataOraAfterAndStatoIn(Integer pazienteUserId, Date dataOra, List<String> stati);
 
@@ -26,8 +29,11 @@ public interface PrenotazioniDettagliateRepository extends CrudRepository<VPreno
 
     // QUERY MEDICI
     Integer countByMedicoUserIdAndDataOraBetweenAndStatoIn(Integer medicoUserId, LocalDateTime start, LocalDateTime end, List<String> stati);
+
     @Query("SELECT COUNT(DISTINCT p.medicoUserId) FROM VPrenotazioniDettagliate p WHERE p.medicoUserId = :medicoUserId")
     Integer countDistinctPazientiByMedico(@Param("medicoUserId") Integer medicoUserId);
+
     List<VPrenotazioniDettagliate> findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(Integer medicoUserId, LocalDateTime start, LocalDateTime end, List<String> stati);
+
     Integer countByMedicoUserIdAndStato(Integer medicoUserId, String stato);
 }

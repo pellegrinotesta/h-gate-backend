@@ -26,11 +26,7 @@ public class UserRegistrationDTO {
     private String provincia;
     private String cap;
     private String ruolo;
-    private String allergie;
-    private String altezzaCm;
-    private String gruppoSanguigno;
-    private String patologieCroniche;
-    private BigDecimal pesoKg;
+    private PazienteMinDTO minore;
     private String annoLaurea;
     private String durataVisitaMinuti;
     private String numeroAlbo;

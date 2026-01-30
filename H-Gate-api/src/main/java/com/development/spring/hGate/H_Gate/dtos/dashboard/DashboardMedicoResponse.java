@@ -1,6 +1,6 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.dashboard;
 
-import com.development.spring.hGate.H_Gate.entity.Prenotazione;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 

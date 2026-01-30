@@ -10,10 +10,13 @@ import java.util.Optional;
 
 public interface PazienteRepository extends CrudRepository<Paziente, Integer> {
 
-    @Query("SELECT p FROM Paziente p JOIN PazienteTutore pt ON pt.paziente.id = p.id JOIN Users u ON u.id = pt.tutore.user.id  WHERE pt.tutore.user.id = :userId")
-    List<Paziente> findByUserId(Integer userId);
+    @Query("SELECT p FROM Paziente p " +
+            "JOIN PazienteTutore pt ON pt.paziente.id = p.id " +
+            "JOIN TutoreLegale t ON pt.tutore.id = t.id " +
+            "WHERE t.user.id = :userId")
+    List<Paziente> findByUserId(@Param("userId") Integer userId);
 
-    boolean existsByCodiceFiscale(String codiceFiscale);
+    Optional<Paziente> findById(Integer pazienteId);
 
     Optional<Paziente> findByCodiceFiscale(String codiceFiscale);
 

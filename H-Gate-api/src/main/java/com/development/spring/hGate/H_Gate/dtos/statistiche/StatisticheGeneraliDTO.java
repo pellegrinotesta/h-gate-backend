@@ -1,4 +1,4 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.statistiche;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

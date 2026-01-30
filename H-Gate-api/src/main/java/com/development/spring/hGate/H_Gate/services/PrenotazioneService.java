@@ -1,20 +1,32 @@
 package com.development.spring.hGate.H_Gate.services;
 
-import com.development.spring.hGate.H_Gate.dtos.StatGiornoDTO;
-import com.development.spring.hGate.H_Gate.dtos.StatSpecializzazioneDTO;
-import com.development.spring.hGate.H_Gate.dtos.StatisticheGeneraliDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
+import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
+import com.development.spring.hGate.H_Gate.dtos.statistiche.StatSpecializzazioneDTO;
+import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliDTO;
+import com.development.spring.hGate.H_Gate.entity.Medico;
+import com.development.spring.hGate.H_Gate.entity.Paziente;
+import com.development.spring.hGate.H_Gate.entity.Prenotazione;
+import com.development.spring.hGate.H_Gate.entity.TutoreLegale;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
-import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
-import com.development.spring.hGate.H_Gate.repositories.PrenotazioneRepository;
+import com.development.spring.hGate.H_Gate.repositories.*;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +35,167 @@ public class PrenotazioneService extends BasicService {
 
     private final PrenotazioneRepository prenotazioneRepository;
     private final MedicoRepository medicoRepository;
+    private final PazienteRepository pazienteRepository;
+    private final TutoreLegaleRepository tutoreLegaleRepository;
+    private final PazienteTutoreRepository pazienteTutoreRepository;
+
+    private static final String PAZIENTE_NOT_FOUND = "Paziente non trovato";
+    private static final String MEDICO_NOT_FOUND = "Medico non trovato";
+    private static final String TUTORE_NOT_AUTHORIZED = "Non sei autorizzato a prenotare per questo paziente";
+    private static final String SLOT_NOT_AVAILABLE = "Orario non disponibile";
+    private static final String MEDICO_NOT_AVAILABLE = "Il medico non è disponibile in questo orario";
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Prenotazione creaPrenotazione(Integer tutoreUserId, PrenotazioneCreateDTO dto) {
+        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tutore non trovato"));
+
+        Paziente paziente = pazienteRepository.findById(dto.getPazienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PAZIENTE_NOT_FOUND));
+
+        boolean isAuthorized = pazienteTutoreRepository.existsByPazienteIdAndTutoreId(paziente.getId(), tutore.getId());
+
+        if(!isAuthorized) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, TUTORE_NOT_AUTHORIZED);
+        }
+
+        Medico medico = medicoRepository.findById(dto.getMedicoId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MEDICO_NOT_FOUND));
+
+        if(!medico.getIsDisponibile()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il medico non è ancora verificato");
+        }
+
+        LocalDateTime dataOra = (dto.getDataOra());
+        LocalDateTime now = LocalDateTime.now();
+
+        if(dataOra.isBefore(now)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Non puoi prenotare una visita nel passato");
+        }
+
+        if(dataOra.isBefore(now.plusHours(1))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La prenotazione deve essere effettuata con almeno 1 ora di anticipo");
+        }
+
+        int anticipoGiorni = medico.getAnticipoPrenotazioneGiorni() != null ? medico.getAnticipoPrenotazioneGiorni() : 30;
+
+        if(dataOra.isAfter(now.plusHours(anticipoGiorni))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Puoi prenotare solo fino a " + anticipoGiorni + " giorni in anticipo");
+        }
+
+        int durataMinuti = medico.getDurataVisitaMinuti() != null ? medico.getDurataVisitaMinuti() : 30;
+        LocalDateTime dataOraFine = dataOra.plusMinutes(durataMinuti);
+
+        boolean slotDisponibile = verificaDisponibilitaSlot(medico.getId(), dataOra, dataOraFine);
+
+        if(!slotDisponibile) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, SLOT_NOT_AVAILABLE
+            );
+        }
+
+        boolean hasPrenotazioniOggi = prenotazioneRepository.existsByPazienteIdAndDataOraBetween(paziente.getId(), dataOra.toLocalDate().atStartOfDay(), dataOra.toLocalDate().atTime(23,59,59));
+
+        if(hasPrenotazioniOggi) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Hai già una prenotazione per questo paziente in questo giorno");
+        }
+
+        Prenotazione prenotazione = Prenotazione.builder()
+                .uuid(UUID.randomUUID().toString())
+                .numeroPrenotazione(generaNumeroPrenotazione())
+                .paziente(paziente)
+                .medico(medico)
+                .dataOra(dataOra)
+                .dataOraFine(dataOraFine)
+                .tipoVisita(dto.getTipoVisita())
+                .stato(StatoPrenotazioneEnum.IN_ATTESA)
+                .costo(dto.getCosto())
+                .notePaziente(dto.getNote())
+                .isPrimaVisita(dto.isPrimaVisita())
+                .isUrgente(false)
+                .confermaInviata(false)
+                .build();
+
+        prenotazione = prenotazioneRepository.save(prenotazione);
+
+        return  prenotazione;
+
+    }
+
+    private String generaNumeroPrenotazione() {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String random = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        return "PRN-" + timestamp + "-" + random;
+    }
+
+    @Transactional
+    public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {
+
+        // Verifica che la prenotazione esista
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Prenotazione non trovata"
+                ));
+
+        // Verifica che il tutore sia autorizzato
+        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Tutore non trovato"
+                ));
+
+        boolean isAuthorized = pazienteTutoreRepository
+                .existsByPazienteIdAndTutoreId(
+                        prenotazione.getPaziente().getId(),
+                        tutore.getId()
+                );
+
+        if (!isAuthorized) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Non sei autorizzato ad annullare questa prenotazione"
+            );
+        }
+
+        // Verifica che la prenotazione non sia già completata o annullata
+        if (prenotazione.getStato() == StatoPrenotazioneEnum.COMPLETATA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Non puoi annullare una prenotazione già completata"
+            );
+        }
+
+        if (prenotazione.getStato() == StatoPrenotazioneEnum.ANNULLATA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Prenotazione già annullata"
+            );
+        }
+
+        // Verifica che non sia troppo tardi per annullare (es. meno di 24 ore)
+        LocalDateTime now = LocalDateTime.now();
+        if (prenotazione.getDataOra().isBefore(now.plusHours(24))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Non puoi annullare una prenotazione a meno di 24 ore dall'appuntamento"
+            );
+        }
+
+        // Annulla la prenotazione
+        prenotazione.setStato(StatoPrenotazioneEnum.ANNULLATA);
+        prenotazione.setMotivoAnnullamento(motivo);
+        prenotazione.setDataAnnullamento(now);
+        prenotazione.setAnnullataDa(tutore.getUser());
+
+        prenotazioneRepository.save(prenotazione);
+
+        return "Prenotazione annullata con successo";
+    }
+
+
+    private boolean verificaDisponibilitaSlot(Integer medicoId, LocalDateTime dataOra, LocalDateTime dataOraFine) {
+        List<Prenotazione> conflitti = prenotazioneRepository.findConflittingAppointments(medicoId, dataOra, dataOraFine, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+
+        return conflitti.isEmpty();
+    }
 
     public StatisticheGeneraliDTO getStatisticheGenerali() {
         // Prenotazioni per giorno della settimana (ultimi 7 giorni)
@@ -74,5 +247,6 @@ public class PrenotazioneService extends BasicService {
                 LocalDate.now().lengthOfMonth()).atTime(LocalTime.MAX);
         return prenotazioneRepository.sumCostoByStatoAndDataOraBetween(StatoPrenotazioneEnum.COMPLETATA, startOfMonth, endOfMonth);
     }
+
 
 }

@@ -1,7 +1,9 @@
 package com.development.spring.hGate.H_Gate.mappers;
 
-import com.development.spring.hGate.H_Gate.dtos.pazienti.PazienteDTO;
-import com.development.spring.hGate.H_Gate.entity.Paziente;
+import com.development.spring.hGate.H_Gate.dtos.MedicoDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
+import com.development.spring.hGate.H_Gate.entity.Medico;
+import com.development.spring.hGate.H_Gate.entity.Prenotazione;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
@@ -10,19 +12,19 @@ import java.util.List;
 
 @Mapper(componentModel = "spring",
         builder = @Builder(disableBuilder = true))
-public interface PazienteMapper {
+public interface PrenotazioneMapper {
 
-    PazienteDTO convertModelToDTO(Paziente paziente);
+    PrenotazioneDTO convertModelToDTO(Prenotazione prenotazione);
 
-    Paziente convertDtoToModel(PazienteDTO pazienteDTO);
+    Prenotazione convertDtoToModel(PrenotazioneDTO prenotazioneDTO);
 
-    List<PazienteDTO> convertModelsToDtos(List<Paziente> pazientes);
+    List<PrenotazioneDTO> convertModelsToDtos(List<Prenotazione> prenotaziones);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateModel(Paziente source, @MappingTarget Paziente target);
+    void updateModel(Prenotazione source, @MappingTarget Prenotazione target);
 
-    default PageDTO<PazienteDTO> convertModelsPageToDtosPage(Page<Paziente> modelsPage) {
-        return PageDTO.<PazienteDTO>builder()
+    default PageDTO<PrenotazioneDTO> convertModelsPageToDtosPage(Page<Prenotazione> modelsPage) {
+        return PageDTO.<PrenotazioneDTO>builder()
                 .content(convertModelsToDtos(modelsPage.getContent()))
                 .first(modelsPage.isFirst())
                 .last(modelsPage.isLast())

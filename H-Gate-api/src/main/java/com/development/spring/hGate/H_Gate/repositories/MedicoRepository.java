@@ -19,4 +19,6 @@ public interface MedicoRepository extends CrudRepository<Medico, Integer> {
     List<Object[]> findTopSpecializzazioni();
     boolean existsByNumeroAlbo(String numeroAlbo);
     Optional<Medico> findByNumeroAlbo(String numeroAlbo);
+
+    Optional<Medico> findById(Integer medicoId);
 }

@@ -1,7 +1,7 @@
 package com.development.spring.hGate.H_Gate.services;
 
-import com.development.spring.hGate.H_Gate.dtos.PazienteDTO;
-import com.development.spring.hGate.H_Gate.dtos.PazienteMinDTO;
+import com.development.spring.hGate.H_Gate.dtos.pazienti.PazienteDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.development.spring.hGate.H_Gate.entity.Paziente;
 import com.development.spring.hGate.H_Gate.entity.PazienteTutore;
 import com.development.spring.hGate.H_Gate.entity.TutoreLegale;
@@ -33,7 +33,7 @@ public class PazienteService extends BasicService {
     }
 
     @Transactional
-    public PazienteDTO addNewPaziente(JwtAuthentication jwtAuthentication, PazienteMinDTO createDTO) {
+    public PazienteDTO addNewPaziente(JwtAuthentication jwtAuthentication, PrenotazioneDTO.PazienteMinDTO createDTO) {
         TutoreLegale tutore = tutoreLegaleRepository.findByUserId(jwtAuthentication.getId())
                 .orElseThrow(() -> buildEntityWithIdNotFoundException(
                         jwtAuthentication.getId(),

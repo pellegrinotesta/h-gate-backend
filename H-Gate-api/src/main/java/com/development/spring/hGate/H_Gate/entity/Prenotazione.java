@@ -46,11 +46,11 @@ public class Prenotazione extends BasicEntity {
 
     @NotNull
     @Column(name = "data_ora", nullable = false)
-    private Date dataOra;
+    private LocalDateTime dataOra;
 
     @NotNull
     @Column(name = "data_ora_fine", nullable = false)
-    private Date dataOraFine;
+    private LocalDateTime dataOraFine;
 
     @NotBlank
     @Column(name = "tipo_visita", nullable = false, length = 100)

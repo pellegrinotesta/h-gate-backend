@@ -1,5 +1,7 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.dashboard;
 
+import com.development.spring.hGate.H_Gate.dtos.MedicoDaVerificareDTO;
+import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 

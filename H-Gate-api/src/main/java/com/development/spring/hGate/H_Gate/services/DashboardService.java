@@ -1,6 +1,8 @@
 package com.development.spring.hGate.H_Gate.services;
 
-import com.development.spring.hGate.H_Gate.dtos.*;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardAdminResponse;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardMedicoResponse;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardPazienteResponse;
 import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.mappers.RefertoMapper;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;

@@ -1,8 +1,8 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
-import com.development.spring.hGate.H_Gate.dtos.PazienteDTO;
-import com.development.spring.hGate.H_Gate.dtos.PazienteMinDTO;
+import com.development.spring.hGate.H_Gate.dtos.pazienti.PazienteDTO;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.development.spring.hGate.H_Gate.entity.Paziente;
 import com.development.spring.hGate.H_Gate.mappers.PazienteMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
@@ -53,7 +53,7 @@ public class PazienteController {
     }
 
     @PostMapping("/add")
-    public ResponseDTO<PazienteDTO> addNewPaziente(JwtAuthentication jwtAuthentication, @RequestBody PazienteMinDTO paziente) {
+    public ResponseDTO<PazienteDTO> addNewPaziente(JwtAuthentication jwtAuthentication, @RequestBody PrenotazioneDTO.PazienteMinDTO paziente) {
         ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
         try {
             res.setOk(true);

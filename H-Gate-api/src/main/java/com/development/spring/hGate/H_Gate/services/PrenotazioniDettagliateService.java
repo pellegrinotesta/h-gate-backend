@@ -1,17 +1,16 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.dtos.*;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
-import com.development.spring.hGate.H_Gate.repositories.PrenotazioneRepository;
 import com.development.spring.hGate.H_Gate.repositories.PrenotazioniDettagliateRepository;
 import com.development.spring.hGate.H_Gate.repositories.RefertoRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -83,7 +82,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 .tipoVisita(prenotazione.getTipoVisita())
                 .stato(prenotazione.getStato())
                 .costo(prenotazione.getCosto())
-                .paziente(PazienteMinDTO.builder()
+                .paziente(PrenotazioneDTO.PazienteMinDTO.builder()
                         .nome(prenotazione.getPazienteNome())
                         .codiceFiscale(prenotazione.getPazienteCf())
                         .email(prenotazione.getPazienteEmail())

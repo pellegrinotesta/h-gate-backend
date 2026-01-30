@@ -1,8 +1,8 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
-import com.development.spring.hGate.H_Gate.dtos.DashboardAdminResponse;
-import com.development.spring.hGate.H_Gate.dtos.DashboardMedicoResponse;
-import com.development.spring.hGate.H_Gate.dtos.DashboardPazienteResponse;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardAdminResponse;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardMedicoResponse;
+import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardPazienteResponse;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.DashboardService;

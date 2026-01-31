@@ -6,7 +6,6 @@ import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardPazienteRespo
 import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.mappers.RefertoMapper;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
-import com.development.spring.hGate.H_Gate.repositories.PazienteRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,23 +20,32 @@ public class DashboardService extends BasicService {
     private final RefertoService refertoService;
     private final RefertoMapper refertoMapper;
     private final MedicoRepository medicoRepository;
-    private final PazienteRepository pazienteRepository;
     private final PrenotazioneService prenotazioneService;
 
-    public DashboardPazienteResponse dashboardPaziente(Integer pazienteId) {
-
-        return DashboardPazienteResponse.builder().
-                prenotazioni(prenotazioniDettagliateService.prenotazioniPaziente(pazienteId))
-                .referti(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)))
-                .prossimiAppuntamenti(prenotazioniDettagliateService.prossimiAppuntamenti(pazienteId))
-                .visiteTotali(prenotazioniDettagliateService.visiteTotali(pazienteId))
+    /**
+     * Dashboard per il TUTORE
+     * Mostra i dati di TUTTI i minori del tutore
+     */
+    public DashboardPazienteResponse dashboardPaziente(Integer tutoreUserId) {
+        return DashboardPazienteResponse.builder()
+                // Usa i metodi per tutore invece che per paziente
+                .prenotazioni(prenotazioniDettagliateService.prenotazioniTutore(tutoreUserId))
+                .referti(refertoMapper.convertModelsToDtos(
+                        refertoService.listaRefertiTutore(tutoreUserId)
+                ))
+                .prossimiAppuntamenti(prenotazioniDettagliateService.prossimiAppuntamentiTutore(tutoreUserId))
+                .visiteTotali(prenotazioniDettagliateService.visiteTotaliTutore(tutoreUserId))
                 .build();
     }
 
+    /**
+     * Dashboard per il MEDICO
+     */
     public DashboardMedicoResponse dashboardMedico(Integer medicoUserId) {
         Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
-        return DashboardMedicoResponse.builder().
-                visiteOggi(prenotazioniDettagliateService.visiteOggi(medicoUserId))
+
+        return DashboardMedicoResponse.builder()
+                .visiteOggi(prenotazioniDettagliateService.visiteOggi(medicoUserId))
                 .pazientiTotali(prenotazioniDettagliateService.pazientiTotali(medicoUserId))
                 .refertiDaFirmare(prenotazioniDettagliateService.refertiDaFirmare(medicoUserId))
                 .refertiDaCompletare(prenotazioniDettagliateService.refertiDaCompletare(medicoUserId))
@@ -47,18 +55,23 @@ public class DashboardService extends BasicService {
                 .build();
     }
 
+    /**
+     * Dashboard per l'ADMIN
+     */
     public DashboardAdminResponse dashboardAdmin(Integer adminUserId) {
         BigDecimal fatturatoMensile = prenotazioneService.fatturatoMensile();
 
-      return DashboardAdminResponse.builder()
-//              .pazientiAttivi(pazienteRepository.countByIsActive(true))
-              .mediciAttivi(medicoRepository.countByIsDisponibile(true))
-              .statistiche(prenotazioneService.getStatisticheGenerali())
-              .prenotazioniOggi(prenotazioneService.prenotazioniOggi())
-              .fatturatoMensile(fatturatoMensile != null ? fatturatoMensile.divide(BigDecimal.valueOf(1000)) : BigDecimal.ZERO)
-//              .mediciInAttesa(prenotazioniDettagliateService.mediciInAttesa())
-//              .mediciDaVerificare(prenotazioniDettagliateService.mediciInAttesa().size())
-              .build();
+        return DashboardAdminResponse.builder()
+                //.mediciAttivi(medicoRepository.countByIsDisponibileTrue())
+                .statistiche(prenotazioneService.getStatisticheGenerali())
+                .prenotazioniOggi(prenotazioneService.prenotazioniOggi())
+                .fatturatoMensile(
+                        fatturatoMensile != null
+                                ? fatturatoMensile.divide(BigDecimal.valueOf(1000))
+                                : BigDecimal.ZERO
+                )
+                .mediciInAttesa(prenotazioniDettagliateService.mediciInAttesa())
+                .mediciDaVerificare(prenotazioniDettagliateService.mediciInAttesa().size())
+                .build();
     }
-
 }

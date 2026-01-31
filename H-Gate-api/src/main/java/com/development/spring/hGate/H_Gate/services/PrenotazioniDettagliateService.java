@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,45 +25,122 @@ public class PrenotazioniDettagliateService extends BasicService {
     private final RefertoRepository refertoRepository;
     private final MedicoRepository medicoRepository;
 
-    public List<VPrenotazioniDettagliate> prenotazioniPaziente(Integer pazienteId) {
-        return prenotazioniDettagliateRepository.findTop5ByPazienteUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(pazienteId, new Date(), List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));    }
+    /**
+     * Ottiene le prossime 5 prenotazioni per il tutore
+     */
+    public List<VPrenotazioniDettagliate> prenotazioniTutore(Integer tutoreUserId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<String> stati = List.of(
+                StatoPrenotazioneEnum.CONFERMATA.name(),
+                StatoPrenotazioneEnum.IN_ATTESA.name()
+        );
 
-    public Integer prossimiAppuntamenti(Integer pazienteUserId) {
-        return prenotazioniDettagliateRepository.countByPazienteUserIdAndDataOraAfterAndStatoIn(pazienteUserId, new Date(), List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+        return prenotazioniDettagliateRepository
+                .findTop5ByTutoreUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(
+                        tutoreUserId,
+                        now,
+                        stati
+                );
     }
 
-    public Integer visiteTotali(Integer pazienteUserId) {
-        return prenotazioniDettagliateRepository.countByPazienteUserId(pazienteUserId);
+    /**
+     * Conta i prossimi appuntamenti del tutore
+     */
+    public Integer prossimiAppuntamentiTutore(Integer tutoreUserId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<String> stati = List.of(
+                StatoPrenotazioneEnum.CONFERMATA.name(),
+                StatoPrenotazioneEnum.IN_ATTESA.name()
+        );
+
+        return prenotazioniDettagliateRepository
+                .countByTutoreUserIdAndDataOraAfterAndStatoIn(
+                        tutoreUserId,
+                        now,
+                        stati
+                );
     }
 
+    /**
+     * Conta tutte le visite del tutore
+     */
+    public Integer visiteTotaliTutore(Integer tutoreUserId) {
+        return prenotazioniDettagliateRepository.countByTutoreUserId(tutoreUserId);
+    }
+
+    /**
+     * Conta le visite di oggi del medico
+     */
     public Integer visiteOggi(Integer medicoUserId) {
-        // Visite oggi
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        return prenotazioniDettagliateRepository.countByMedicoUserIdAndDataOraBetweenAndStatoIn(medicoUserId, startOfDay, endOfDay, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+        List<String> stati = List.of(
+                StatoPrenotazioneEnum.CONFERMATA.name(),
+                StatoPrenotazioneEnum.IN_ATTESA.name()
+        );
+
+        return prenotazioniDettagliateRepository
+                .countByMedicoUserIdAndDataOraBetweenAndStatoIn(
+                        medicoUserId,
+                        startOfDay,
+                        endOfDay,
+                        stati
+                );
     }
 
+    /**
+     * Conta i pazienti totali del medico
+     */
     public Integer pazientiTotali(Integer medicoUserId) {
-        return prenotazioniDettagliateRepository.countDistinctPazientiByMedico(medicoUserId);
+        return prenotazioniDettagliateRepository
+                .countDistinctPazientiByMedico(medicoUserId);
     }
 
+    /**
+     * Conta i referti da firmare del medico
+     */
     public Integer refertiDaFirmare(Integer medicoUserId) {
-        return refertoRepository.countByMedicoAndIsFirmato(medicoUserId);
+        return refertoRepository.countByMedicoUserIdAndIsFirmatoFalse(medicoUserId);
     }
 
+    /**
+     * Conta i referti da completare (visite completate senza referto)
+     */
     public Integer refertiDaCompletare(Integer medicoUserId) {
-        return prenotazioniDettagliateRepository.countByMedicoUserIdAndStato(medicoUserId, StatoPrenotazioneEnum.COMPLETATA.name());
+        return prenotazioniDettagliateRepository
+                .countByMedicoUserIdAndStato(
+                        medicoUserId,
+                        StatoPrenotazioneEnum.COMPLETATA.name()
+                );
     }
 
-    public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId){
-        // Visite oggi
+    /**
+     * Ottiene gli appuntamenti di oggi del medico
+     */
+    public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        List<VPrenotazioniDettagliate>  prenotazioniDettagliate = prenotazioniDettagliateRepository.findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(medicoUserId, startOfDay, endOfDay, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+        List<String> stati = List.of(
+                StatoPrenotazioneEnum.CONFERMATA.name(),
+                StatoPrenotazioneEnum.IN_ATTESA.name()
+        );
 
-        return prenotazioniDettagliate.stream().map(this::mapToPrenotazioneDTO).toList();
+        List<VPrenotazioniDettagliate> prenotazioni = prenotazioniDettagliateRepository
+                .findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(
+                        medicoUserId,
+                        startOfDay,
+                        endOfDay,
+                        stati
+                );
+
+        return prenotazioni.stream()
+                .map(this::mapToPrenotazioneDTO)
+                .toList();
     }
 
+    /**
+     * Ottiene i medici in attesa di verifica
+     */
     public List<MedicoDaVerificareDTO> mediciInAttesa() {
         return medicoRepository
                 .findByIsVerificatoFalse()
@@ -73,50 +149,20 @@ public class PrenotazioniDettagliateService extends BasicService {
                 .collect(Collectors.toList());
     }
 
-
-    private PrenotazioneDTO mapToPrenotazioneDTO(VPrenotazioniDettagliate prenotazione) {
+    private PrenotazioneDTO mapToPrenotazioneDTO(VPrenotazioniDettagliate v) {
         return PrenotazioneDTO.builder()
-                .numeroPrenotazione(prenotazione.getNumeroPrenotazione())
-                .dataOra(prenotazione.getDataOra())
-                .dataOraFine(prenotazione.getDataOraFine())
-                .tipoVisita(prenotazione.getTipoVisita())
-                .stato(prenotazione.getStato())
-                .costo(prenotazione.getCosto())
+                .numeroPrenotazione(v.getNumeroPrenotazione())
+                .dataOra(v.getDataOra())
+                .dataOraFine(v.getDataOraFine())
+                .tipoVisita(v.getTipoVisita())
+                .stato(v.getStato())
+                .costo(v.getCosto())
                 .paziente(PrenotazioneDTO.PazienteMinDTO.builder()
-                        .nome(prenotazione.getPazienteNome())
-                        .codiceFiscale(prenotazione.getPazienteCf())
-                        .email(prenotazione.getPazienteEmail())
+                        .nome(v.getPazienteNome())
+                        .cognome(v.getPazienteCognome())
+                        .codiceFiscale(v.getPazienteCf())
+                        .email(v.getTutoreEmail()) // Email del tutore
                         .build())
-//                .medico(mapToMedicoMinDTO(prenotazione.getMedico()))
-                .build();
-    }
-
-    private RefertoDTO mapToRefertoDTO(Referto referto) {
-        return RefertoDTO.builder()
-                .titolo(referto.getTitolo())
-                .dataEmissione(referto.getDataEmissione())
-                .tipoReferto(referto.getTipoReferto())
-                .diagnosi(referto.getDiagnosi())
-//                .hasAllegati(!referto.getAllegati().isEmpty())
-//                .medico(mapToMedicoMinDTO(referto.getMedico()))
-                .build();
-    }
-
-//    private PazienteMinDTO mapToPazienteMinDTO(Paziente paziente) {
-//        return PazienteMinDTO.builder()
-//                .id(paziente.getId())
-//                .codiceFiscale(paziente.getCodiceFiscale())
-//                .build();
-//    }
-
-    private MedicoMinDTO mapToMedicoMinDTO(Medico medico) {
-        return MedicoMinDTO.builder()
-                .id(medico.getId())
-                .nome(medico.getUser().getNome())
-                .cognome(medico.getUser().getCognome())
-                .specializzazione(medico.getSpecializzazione())
-                .email(medico.getUser().getEmail())
-                .ratingMedio(medico.getRatingMedio())
                 .build();
     }
 
@@ -133,5 +179,4 @@ public class PrenotazioniDettagliateService extends BasicService {
                 .hasDocuments(true)
                 .build();
     }
-
 }

@@ -20,8 +20,8 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
 
-    @GetMapping("/paziente")
-    @PreAuthorize("hasAuthority('PAZIENTE', 'TUTORE')")
+    @GetMapping("/tutore")
+    @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<DashboardPazienteResponse> dashboardPaziente(JwtAuthentication jwtAuthentication) {
         ResponseDTO<DashboardPazienteResponse> res = new ResponseDTO<>();
         try{

@@ -14,6 +14,12 @@ public class RefertoService extends BasicEntity {
 
     private final RefertoRepository refertoRepository;
 
+    /**
+     * Ottiene i referti di tutti i minori di un tutore
+     */
+    public List<Referto> listaRefertiTutore(Integer tutoreUserId) {
+        return refertoRepository.findTop5ByTutoreUserIdOrderByDataEmissioneDesc(tutoreUserId);
+    }
 
     public List<Referto> listaRefertiPaziente(Integer userId) {
         return refertoRepository.listaRefertiPaziente(userId);

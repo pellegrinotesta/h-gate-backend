@@ -22,4 +22,31 @@ public interface RefertoRepository extends CrudRepository<Referto, Integer> {
 
     @Query("SELECT COUNT(DISTINCT m.user.id) FROM Referto r JOIN Medico m ON r.medico.id = m.id WHERE m.user.id = :userId and r.isFirmato is false")
     Integer countByMedicoAndIsFirmato(@Param("userId") Integer userId);
+
+    @Query("SELECT COUNT(r) FROM Referto r " +
+            "WHERE r.medico.user.id = :medicoUserId " +
+            "AND r.isFirmato = false")
+    Integer countByMedicoUserIdAndIsFirmatoFalse(@Param("medicoUserId") Integer medicoUserId);
+
+    // Lista referti di un paziente specifico
+    List<Referto> findByPazienteIdOrderByDataEmissioneDesc(Long pazienteId);
+
+    // Lista referti per tutore (tutti i minori del tutore)
+    @Query("SELECT r FROM Referto r " +
+            "INNER JOIN Paziente p ON r.paziente.id = p.id " +
+            "INNER JOIN PazienteTutore pt ON p.id = pt.paziente.id " +
+            "INNER JOIN TutoreLegale tl ON pt.tutore.id = tl.id " +
+            "WHERE tl.user.id = :tutoreUserId " +
+            "ORDER BY r.dataEmissione DESC")
+    List<Referto> findByTutoreUserId(@Param("tutoreUserId") Long tutoreUserId);
+
+    // Top 5 referti recenti per tutore
+    @Query("SELECT r FROM Referto r " +
+            "INNER JOIN Paziente p ON r.paziente.id = p.id " +
+            "INNER JOIN PazienteTutore pt ON p.id = pt.paziente.id " +
+            "INNER JOIN TutoreLegale tl ON pt.tutore.id = tl.id " +
+            "WHERE tl.user.id = :tutoreUserId " +
+            "ORDER BY r.dataEmissione DESC " +
+            "LIMIT 5")
+    List<Referto> findTop5ByTutoreUserIdOrderByDataEmissioneDesc(@Param("tutoreUserId") Integer tutoreUserId);
 }

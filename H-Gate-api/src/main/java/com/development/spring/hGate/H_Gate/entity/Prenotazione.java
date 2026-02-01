@@ -60,7 +60,6 @@ public class Prenotazione extends BasicEntity {
     @Column(nullable = false)
     private StatoPrenotazioneEnum stato = StatoPrenotazioneEnum.IN_ATTESA;
 
-    @NotNull
     @DecimalMin("0.0")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal costo;

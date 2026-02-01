@@ -39,11 +39,6 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
     );
 
     /**
-     * Trova prenotazioni del paziente
-     */
-    List<Prenotazione> findByPazienteIdOrderByDataOraDesc(Long pazienteId);
-
-    /**
      * Trova prenotazioni del medico per un giorno specifico
      */
     @Query("SELECT p FROM Prenotazione p " +
@@ -65,4 +60,10 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
             "AND data_ora >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
             nativeQuery = true)
     Integer countByDayOfWeek(@Param("dayOfWeek") Integer dayOfWeek);
+
+    List<Prenotazione> findByMedicoIdAndDataOraBetween(
+            Integer medicoId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }

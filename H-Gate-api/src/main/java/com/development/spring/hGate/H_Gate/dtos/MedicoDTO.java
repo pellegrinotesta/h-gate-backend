@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class MedicoDTO {
 
     private Integer id;
+    private UserDTO user;
     private String specializzazione;
     private String numeroAlbo;
     private String universita;
@@ -25,16 +26,16 @@ public class MedicoDTO {
     private String curriculum;
     private String tariffe;
     private String orariDisponibilita;
-    private Integer durataVisitaMinuti = 30;
-    private Integer pausaTraVisiteMinuti = 5;
-    private Integer anticipoPrenotazioneGiorni = 30;
+    private Integer durataVisitaMinuti;
+    private Integer pausaTraVisiteMinuti;
+    private Integer anticipoPrenotazioneGiorni;
     private Boolean isDisponibile = true;
     private Boolean isVerificato = false;
     private LocalDateTime dataVerifica;
     private UserDTO verificatoDa;
-    private BigDecimal ratingMedio = BigDecimal.ZERO;
-    private Integer numeroRecensioni = 0;
-    private Integer numeroPazienti = 0;
+    private BigDecimal ratingMedio;
+    private Integer numeroRecensioni;
+    private Integer numeroPazienti;
 
 
 }

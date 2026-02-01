@@ -48,7 +48,6 @@ CREATE TABLE `medici` (
     `anno_laurea` INT NULL,
     `bio` TEXT NULL,
     `curriculum` TEXT NULL,
-    `tariffe` JSON NULL,
     `orari_disponibilita` JSON NULL,
     `durata_visita_minuti` INT DEFAULT 30,
     `pausa_tra_visite_minuti` INT DEFAULT 5,
@@ -75,6 +74,23 @@ CREATE TABLE `medici` (
     CHECK (`rating_medio` BETWEEN 0 AND 5),
     CHECK (`durata_visita_minuti` BETWEEN 10 AND 120)
 );
+
+CREATE TABLE tariffe_medici (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    medico_id INT NOT NULL,
+    tipo_visita VARCHAR(100) NOT NULL,
+    is_prima_visita BOOLEAN DEFAULT FALSE,
+    costo DECIMAL(10,2) NOT NULL,
+    durata_minuti INT NULL,
+    is_attiva BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (medico_id) REFERENCES medici(id) ON DELETE CASCADE,
+
+    UNIQUE KEY uk_medico_tipo (medico_id, tipo_visita, is_prima_visita),
+    CHECK (costo >= 0)
+);
+
 
 CREATE TABLE `pazienti` (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -752,3 +768,167 @@ LEFT JOIN users ut ON tl.user_id = ut.id
 WHERE DATE(pr.data_ora) = CURDATE()
 AND pr.stato IN ('CONFERMATA', 'IN_ATTESA')
 ORDER BY pr.data_ora;
+
+
+DROP VIEW IF EXISTS v_dashboard_kpi;
+
+CREATE VIEW v_dashboard_kpi AS
+SELECT
+    -- ======== PAZIENTI ========
+    (SELECT COUNT(*)
+     FROM pazienti) AS totale_pazienti,
+
+    (SELECT COUNT(*)
+     FROM pazienti
+     WHERE consenso_privacy = TRUE) AS pazienti_consenso_attivo,
+
+    (SELECT COUNT(DISTINCT paziente_id)
+     FROM percorsi_terapeutici
+     WHERE stato = 'ATTIVO') AS pazienti_in_terapia,
+
+    (SELECT COUNT(*)
+     FROM pazienti
+     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 0 AND 5) AS pazienti_0_5_anni,
+
+    (SELECT COUNT(*)
+     FROM pazienti
+     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 6 AND 12) AS pazienti_6_12_anni,
+
+    (SELECT COUNT(*)
+     FROM pazienti
+     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 13 AND 18) AS pazienti_13_18_anni,
+
+    -- ======== TUTORI ========
+    (SELECT COUNT(*)
+     FROM tutori_legali) AS totale_tutori,
+
+    -- ======== SPECIALISTI ========
+    (SELECT COUNT(*)
+     FROM medici
+     WHERE is_disponibile = TRUE) AS medici_disponibili,
+
+    (SELECT COUNT(*)
+     FROM medici
+     WHERE is_verificato = TRUE) AS medici_verificati,
+
+    (SELECT COUNT(*)
+     FROM medici m
+     JOIN users u ON m.user_id = u.id
+     WHERE u.is_active = TRUE) AS medici_attivi,
+
+    (SELECT COUNT(*)
+     FROM medici
+     WHERE specializzazione LIKE '%Neuropsichiatra%') AS neuropsichiatri,
+
+    (SELECT COUNT(*)
+     FROM medici
+     WHERE specializzazione LIKE '%Psicologo%') AS psicologi,
+
+    (SELECT COUNT(*)
+     FROM medici
+     WHERE specializzazione LIKE '%Logopedista%') AS logopedisti,
+
+    -- ======== PRENOTAZIONI OGGI ========
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE DATE(data_ora) = CURDATE()) AS prenotazioni_oggi,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE DATE(data_ora) = CURDATE()
+     AND stato = 'CONFERMATA') AS prenotazioni_oggi_confermate,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE DATE(data_ora) = CURDATE()
+     AND stato = 'COMPLETATA') AS prenotazioni_oggi_completate,
+
+    -- ======== PRENOTAZIONI SETTIMANA ========
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE data_ora >= CURDATE()
+     AND data_ora < DATE_ADD(CURDATE(), INTERVAL 7 DAY)) AS prenotazioni_prossimi_7_giorni,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE YEARWEEK(data_ora, 1) = YEARWEEK(CURDATE(), 1)) AS prenotazioni_questa_settimana,
+
+    -- ======== PRENOTAZIONI MESE ========
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE YEAR(data_ora) = YEAR(CURDATE())
+     AND MONTH(data_ora) = MONTH(CURDATE())) AS prenotazioni_questo_mese,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE YEAR(data_ora) = YEAR(CURDATE())
+     AND MONTH(data_ora) = MONTH(CURDATE())
+     AND stato = 'COMPLETATA') AS prenotazioni_completate_mese,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE stato = 'IN_ATTESA') AS prenotazioni_da_confermare,
+
+    (SELECT COUNT(*)
+     FROM prenotazioni
+     WHERE stato = 'ANNULLATA'
+     AND MONTH(data_annullamento) = MONTH(CURDATE())) AS prenotazioni_annullate_mese,
+
+    -- ======== PERCORSI TERAPEUTICI ========
+    (SELECT COUNT(*)
+     FROM percorsi_terapeutici
+     WHERE stato = 'ATTIVO') AS percorsi_attivi,
+
+    (SELECT COUNT(*)
+     FROM percorsi_terapeutici
+     WHERE stato = 'IN_VALUTAZIONE') AS percorsi_in_valutazione,
+
+    (SELECT COUNT(*)
+     FROM percorsi_terapeutici
+     WHERE stato = 'SOSPESO') AS percorsi_sospesi,
+
+
+    -- ======== REFERTI ========
+    (SELECT COUNT(*)
+     FROM referti
+     WHERE YEAR(data_emissione) = YEAR(CURDATE())
+     AND MONTH(data_emissione) = MONTH(CURDATE())) AS referti_emessi_mese,
+
+    (SELECT COUNT(*)
+     FROM referti
+     WHERE is_firmato = FALSE) AS referti_da_firmare,
+
+    (SELECT COUNT(*)
+     FROM referti
+     WHERE is_inviato_paziente = FALSE) AS referti_da_inviare,
+
+    -- ======== NOTIFICHE ========
+    (SELECT COUNT(*)
+     FROM notifiche
+     WHERE is_letta = FALSE) AS notifiche_non_lette,
+
+    (SELECT COUNT(*)
+     FROM notifiche
+     WHERE DATE(created_at) = CURDATE()) AS notifiche_oggi,
+
+    -- ======== STATISTICHE MEDIE ========
+    (SELECT COALESCE(AVG(rating_medio), 0)
+     FROM medici
+     WHERE numero_recensioni > 0) AS rating_medio_medici,
+
+    (SELECT COALESCE(AVG(numero_sedute_effettuate), 0)
+     FROM percorsi_terapeutici
+     WHERE stato = 'ATTIVO') AS media_sedute_per_percorso,
+
+    -- ======== TREND (confronto con mese scorso) ========
+    (SELECT COUNT(*) - (
+        SELECT COUNT(*)
+        FROM prenotazioni
+        WHERE YEAR(data_ora) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        AND MONTH(data_ora) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+    ) FROM prenotazioni
+     WHERE YEAR(data_ora) = YEAR(CURDATE())
+     AND MONTH(data_ora) = MONTH(CURDATE())) AS trend_prenotazioni_mese,
+
+    -- ======== TIMESTAMP AGGIORNAMENTO ========
+    NOW() AS ultimo_aggiornamento;

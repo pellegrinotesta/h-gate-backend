@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("medico")
@@ -17,6 +19,22 @@ public class MedicoController {
 
     private final MedicoService medicoService;
     private final MedicoMapper medicoMapper;
+
+    @GetMapping("/all")
+    public ResponseDTO<List<MedicoDTO>> getAll() {
+        ResponseDTO<List<MedicoDTO>> res = new ResponseDTO<>();
+        try {
+
+            res.setOk(true);
+            res.setData(medicoMapper.convertModelsToDtos(medicoService.getAll()));
+
+        } catch (Exception e) {
+            res.setOk(false);
+            res.setMessage(e.getMessage());
+        }
+
+        return res;
+    }
 
     @GetMapping("/user-id")
     public ResponseDTO<MedicoDTO> findMedicoByUserId(JwtAuthentication jwtAuthentication) {

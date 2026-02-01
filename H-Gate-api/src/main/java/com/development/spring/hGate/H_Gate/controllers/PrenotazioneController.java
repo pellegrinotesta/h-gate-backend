@@ -4,6 +4,7 @@ import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneAnnullaDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.entity.Prenotazione;
 import com.development.spring.hGate.H_Gate.mappers.PrenotazioneMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
@@ -23,7 +24,7 @@ public class PrenotazioneController {
 
     @PostMapping()
     @PreAuthorize("hasAuthority('TUTORE')")
-    public ResponseDTO<PrenotazioneDTO> creaPrenotazione(JwtAuthentication jwtAuthentication, @Valid @RequestBody PrenotazioneCreateDTO dto) {
+    public ResponseDTO<PrenotazioneDTO> creaPrenotazione(JwtAuthentication jwtAuthentication, @RequestBody PrenotazioneCreateDTO dto) {
        ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
 
        try {
@@ -55,6 +56,21 @@ public class PrenotazioneController {
         }
 
         return res;
-
     }
+
+    @GetMapping("/disponibilita/{medicoId}")
+    public ResponseDTO<SlotDisponibiliDTO> verificaDisponibilita(@PathVariable Integer medicoId, @RequestParam String data) {
+        ResponseDTO<SlotDisponibiliDTO> res = new ResponseDTO<>();
+
+        try {
+            res.setOk(true);
+            res.setData(prenotazioneService.getSlotDisponibili(medicoId, data));
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
 }

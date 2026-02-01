@@ -7,6 +7,8 @@ import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class MedicoService extends BasicService {
@@ -17,6 +19,10 @@ public class MedicoService extends BasicService {
 
     public Medico findMedicoByUserId(JwtAuthentication jwtAuthentication) {
         return medicoRepository.findMedicoByUserId(jwtAuthentication.getId());
+    }
+
+    public List<Medico> getAll() {
+        return medicoRepository.findAll();
     }
 
     public Medico update(Medico medico) {

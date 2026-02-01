@@ -2,6 +2,8 @@ package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibileDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatSpecializzazioneDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliDTO;
@@ -24,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -246,6 +249,74 @@ public class PrenotazioneService extends BasicService {
         LocalDateTime endOfMonth = LocalDate.now().withDayOfMonth(
                 LocalDate.now().lengthOfMonth()).atTime(LocalTime.MAX);
         return prenotazioneRepository.sumCostoByStatoAndDataOraBetween(StatoPrenotazioneEnum.COMPLETATA, startOfMonth, endOfMonth);
+    }
+
+    @Transactional(readOnly = true)
+    public SlotDisponibiliDTO getSlotDisponibili(Integer medicoId, String data) {
+
+        Medico medico = medicoRepository.findById(medicoId)
+                .orElseThrow(() -> new IllegalArgumentException("Medico non trovato"));
+
+        LocalDate date = LocalDate.parse(data);
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        // Prenotazioni già esistenti per quel giorno
+        List<Prenotazione> prenotazioni = prenotazioneRepository
+                .findByMedicoIdAndDataOraBetween(medicoId, startOfDay, endOfDay);
+
+        // ⬇️ esempio: orario lavorativo fisso (adatta se usi JSON o tabella)
+        LocalTime inizioLavoro = LocalTime.of(9, 0);
+        LocalTime fineLavoro = LocalTime.of(17, 0);
+
+        int durata = medico.getDurataVisitaMinuti();
+        int pausa = medico.getPausaTraVisiteMinuti();
+
+        List<SlotDisponibileDTO> slots = new ArrayList<>();
+
+        LocalDateTime current = date.atTime(inizioLavoro);
+        LocalDateTime fine = date.atTime(fineLavoro);
+
+        while (!current.plusMinutes(durata).isAfter(fine)) {
+
+            LocalDateTime slotEnd = current.plusMinutes(durata);
+
+            LocalDateTime finalCurrent = current;
+            boolean occupato = prenotazioni.stream().anyMatch(p ->
+                    overlaps(finalCurrent, slotEnd, p.getDataOra(),
+                            p.getDataOra().plusMinutes(durata))
+            );
+
+            slots.add(
+                    SlotDisponibileDTO.builder()
+                            .dataOra(current)
+                            .dataOraFine(slotEnd)
+                            .disponibile(!occupato)
+                            .motivoNonDisponibilita(
+                                    occupato ? "Slot già prenotato" : null
+                            )
+                            .build()
+            );
+
+            current = slotEnd.plusMinutes(pausa);
+        }
+
+        return SlotDisponibiliDTO.builder()
+                .medicoId(medico.getId())
+                .medicoNome("Dr. " + medico.getUser().getNome() + " " + medico.getUser().getCognome())
+                .data(data)
+                .durataVisitaMinuti(durata)
+                .slots(slots)
+                .build();
+    }
+
+    private boolean overlaps(
+            LocalDateTime start1,
+            LocalDateTime end1,
+            LocalDateTime start2,
+            LocalDateTime end2
+    ) {
+        return start1.isBefore(end2) && start2.isBefore(end1);
     }
 
 

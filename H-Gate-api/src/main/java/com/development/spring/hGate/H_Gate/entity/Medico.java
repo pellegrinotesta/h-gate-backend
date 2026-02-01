@@ -23,7 +23,7 @@ import java.util.List;
 @Table(name = "medici")
 public class Medico extends BasicEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 

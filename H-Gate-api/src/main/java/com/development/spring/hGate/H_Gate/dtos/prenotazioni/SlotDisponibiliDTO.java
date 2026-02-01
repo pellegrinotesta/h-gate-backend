@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SlotDisponibiliDTO {
 
-    private Long medicoId;
+    private Integer medicoId;
     private String medicoNome;
     private String data;
     private List<SlotDisponibileDTO> slots;

@@ -41,6 +41,7 @@ public class PrenotazioneService extends BasicService {
     private final PazienteRepository pazienteRepository;
     private final TutoreLegaleRepository tutoreLegaleRepository;
     private final PazienteTutoreRepository pazienteTutoreRepository;
+    private final TariffeMediciRepository tariffeMediciRepository;
 
     private static final String PAZIENTE_NOT_FOUND = "Paziente non trovato";
     private static final String MEDICO_NOT_FOUND = "Medico non trovato";
@@ -78,11 +79,11 @@ public class PrenotazioneService extends BasicService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La prenotazione deve essere effettuata con almeno 1 ora di anticipo");
         }
 
-        int anticipoGiorni = medico.getAnticipoPrenotazioneGiorni() != null ? medico.getAnticipoPrenotazioneGiorni() : 30;
-
-        if(dataOra.isAfter(now.plusHours(anticipoGiorni))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Puoi prenotare solo fino a " + anticipoGiorni + " giorni in anticipo");
-        }
+//        int anticipoGiorni = medico.getAnticipoPrenotazioneGiorni() != null ? medico.getAnticipoPrenotazioneGiorni() : 30;
+//
+//        if(dataOra.isAfter(now.plusHours(anticipoGiorni))) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Puoi prenotare solo fino a " + anticipoGiorni + " giorni in anticipo");
+//        }
 
         int durataMinuti = medico.getDurataVisitaMinuti() != null ? medico.getDurataVisitaMinuti() : 30;
         LocalDateTime dataOraFine = dataOra.plusMinutes(durataMinuti);
@@ -100,6 +101,14 @@ public class PrenotazioneService extends BasicService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Hai già una prenotazione per questo paziente in questo giorno");
         }
 
+        BigDecimal costo = tariffeMediciRepository
+                .findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Tariffa non configurata"
+                ));
+
+
         Prenotazione prenotazione = Prenotazione.builder()
                 .uuid(UUID.randomUUID().toString())
                 .numeroPrenotazione(generaNumeroPrenotazione())
@@ -109,7 +118,7 @@ public class PrenotazioneService extends BasicService {
                 .dataOraFine(dataOraFine)
                 .tipoVisita(dto.getTipoVisita())
                 .stato(StatoPrenotazioneEnum.IN_ATTESA)
-                .costo(dto.getCosto())
+                .costo(costo)
                 .notePaziente(dto.getNote())
                 .isPrimaVisita(dto.isPrimaVisita())
                 .isUrgente(false)
@@ -123,10 +132,14 @@ public class PrenotazioneService extends BasicService {
     }
 
     private String generaNumeroPrenotazione() {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String random = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        return "PRN-" + timestamp + "-" + random;
+
+        LocalDate today = LocalDate.now();
+        String data = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        long progressivo = prenotazioneRepository.countByData(today) + 1;
+        String progressivoFormatted = String.format("%03d", progressivo);
+        return "NPI" + data + progressivoFormatted;
     }
+
 
     @Transactional
     public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {

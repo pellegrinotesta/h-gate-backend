@@ -1,10 +1,12 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.medici;
 
+import com.development.spring.hGate.H_Gate.dtos.UserDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Setter
 @Getter
@@ -24,7 +26,6 @@ public class MedicoDTO {
     private Integer annoLaurea;
     private String bio;
     private String curriculum;
-    private String tariffe;
     private String orariDisponibilita;
     private Integer durataVisitaMinuti;
     private Integer pausaTraVisiteMinuti;

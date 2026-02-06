@@ -290,6 +290,7 @@ CREATE TABLE `allegati` (
     CHECK (`size_bytes` > 0),
     CHECK (`size_bytes` <= 10485760)
 );
+
 CREATE TABLE `recensioni` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `prenotazione_id` INT UNIQUE NOT NULL,
@@ -376,6 +377,22 @@ CREATE TABLE `eccezioni_disponibilita` (
     INDEX `idx_date` (`data_inizio`, `data_fine`),
 
     CHECK (`data_fine` >= `data_inizio`)
+);
+
+CREATE TABLE tariffe_medici (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    medico_id INT NOT NULL,
+    tipo_visita VARCHAR(100) NOT NULL,
+    is_prima_visita BOOLEAN DEFAULT FALSE,
+    costo DECIMAL(10,2) NOT NULL,
+    durata_minuti INT NULL,
+    is_attiva BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (medico_id) REFERENCES medici(id) ON DELETE CASCADE,
+
+    UNIQUE KEY uk_medico_tipo (medico_id, tipo_visita, is_prima_visita),
+    CHECK (costo >= 0)
 );
 
 CREATE TABLE `audit_log` (

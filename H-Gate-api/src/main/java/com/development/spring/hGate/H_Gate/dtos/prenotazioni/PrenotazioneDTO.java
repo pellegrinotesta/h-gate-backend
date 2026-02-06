@@ -1,7 +1,7 @@
 package com.development.spring.hGate.H_Gate.dtos.prenotazioni;
 
-import com.development.spring.hGate.H_Gate.dtos.MedicoDTO;
-import com.development.spring.hGate.H_Gate.dtos.RefertoDTO;
+import com.development.spring.hGate.H_Gate.dtos.medici.MedicoDTO;
+import com.development.spring.hGate.H_Gate.dtos.medici.RefertoDTO;
 import com.development.spring.hGate.H_Gate.dtos.UserDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;

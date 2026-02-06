@@ -1,4 +1,4 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.medici;
 
 import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.entity.Paziente;
@@ -24,9 +24,6 @@ import java.time.LocalDateTime;
 public class RefertoDTO {
 
     private String uuid;
-//    private Prenotazione prenotazione;
-//    private Medico medico;
-//    private Paziente paziente;
     private LocalDateTime dataEmissione;
     private String tipoReferto;
     private String titolo;

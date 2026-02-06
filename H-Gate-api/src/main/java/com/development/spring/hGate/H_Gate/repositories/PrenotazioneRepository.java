@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -66,4 +67,7 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
             LocalDateTime start,
             LocalDateTime end
     );
+
+    @Query("SELECT COUNT(p) FROM Prenotazione p WHERE DATE(p.dataOra) = :data")
+    Long countByData(@Param("data") LocalDate data);
 }

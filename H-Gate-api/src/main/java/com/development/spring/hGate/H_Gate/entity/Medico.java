@@ -47,9 +47,6 @@ public class Medico extends BasicEntity {
     @Column(columnDefinition = "TEXT")
     private String curriculum;
 
-    @Column(columnDefinition = "JSON")
-    private String tariffe;
-
     @Column(name = "orari_disponibilita", columnDefinition = "JSON")
     private String orariDisponibilita;
 
@@ -98,10 +95,6 @@ public class Medico extends BasicEntity {
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<DisponibilitaMedico> disponibilita = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
-//    @JsonIgnore
-//    private List<EccezioneDisponibilita> eccezioni = new ArrayList<>();
 
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
     @JsonIgnore

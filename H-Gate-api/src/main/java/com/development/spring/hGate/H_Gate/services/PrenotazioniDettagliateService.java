@@ -1,6 +1,6 @@
 package com.development.spring.hGate.H_Gate.services;
 
-import com.development.spring.hGate.H_Gate.dtos.*;
+import com.development.spring.hGate.H_Gate.dtos.medici.MedicoDaVerificareDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;

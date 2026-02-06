@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -26,6 +27,9 @@ public class TariffeMedici extends BasicEntity {
 
     @Column(name = "tipo_visita")
     private String tipoVisita;
+
+    @Column(name = "costo")
+    private BigDecimal costo;
 
     private boolean isPrimaVisita;
     private Integer durataMinuti;

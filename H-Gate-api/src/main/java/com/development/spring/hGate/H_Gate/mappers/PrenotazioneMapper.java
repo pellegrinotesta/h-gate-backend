@@ -1,8 +1,6 @@
 package com.development.spring.hGate.H_Gate.mappers;
 
-import com.development.spring.hGate.H_Gate.dtos.MedicoDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
-import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.entity.Prenotazione;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import org.mapstruct.*;

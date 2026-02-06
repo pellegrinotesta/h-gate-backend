@@ -1,6 +1,6 @@
 package com.development.spring.hGate.H_Gate.mappers;
 
-import com.development.spring.hGate.H_Gate.dtos.RefertoDTO;
+import com.development.spring.hGate.H_Gate.dtos.medici.RefertoDTO;
 import com.development.spring.hGate.H_Gate.entity.Referto;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import org.mapstruct.*;

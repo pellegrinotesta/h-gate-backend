@@ -547,71 +547,62 @@ WHERE r.role = 'MEDICO';
 -- ============================================================
 DROP VIEW IF EXISTS `v_prenotazioni_dettagliate`;
 
-CREATE VIEW `v_prenotazioni_dettagliate` AS
+CREATE
+ALGORITHM = UNDEFINED
+DEFINER = `h_gate_user`@`%`
+SQL SECURITY DEFINER
+VIEW v_prenotazioni_dettagliate AS
 SELECT
-    -- Dati Prenotazione
-    pr.id,
-    pr.uuid,
-    pr.numero_prenotazione,
-    pr.data_ora,
-    pr.data_ora_fine,
-    pr.tipo_visita,
-    pr.stato,
-    pr.costo,
-    pr.note_paziente,
-    pr.note_medico,
-    pr.is_prima_visita,
-    pr.is_urgente,
-    pr.promemoria_inviato,
-    pr.conferma_inviata,
-    pr.created_at,
-    pr.updated_at,
+    pr.id                  AS id,
+    pr.uuid                AS uuid,
+    pr.numero_prenotazione AS numero_prenotazione,
+    pr.data_ora            AS data_ora,
+    pr.data_ora_fine       AS data_ora_fine,
+    pr.tipo_visita         AS tipo_visita,
+    pr.stato               AS stato,
+    pr.costo               AS costo,
+    pr.note_paziente       AS note_paziente,
+    pr.note_medico         AS note_medico,
+    pr.is_prima_visita     AS is_prima_visita,
+    pr.is_urgente          AS is_urgente,
+    pr.promemoria_inviato  AS promemoria_inviato,
+    pr.conferma_inviata    AS conferma_inviata,
+    pr.created_at          AS created_at,
+    pr.updated_at          AS updated_at,
 
-    -- Dati Paziente (bambino)
-    p.id AS paziente_id,
+    -- PAZIENTE
+    p.id                   AS paziente_id,
     CONCAT(p.nome, ' ', p.cognome) AS paziente_nome_completo,
-    p.nome AS paziente_nome,
-    p.cognome AS paziente_cognome,
-    p.codice_fiscale AS paziente_cf,
-    p.data_nascita AS paziente_data_nascita,
+    p.nome                 AS paziente_nome,
+    p.cognome              AS paziente_cognome,
+    p.codice_fiscale       AS paziente_cf,
+    p.data_nascita         AS paziente_data_nascita,
     TIMESTAMPDIFF(YEAR, p.data_nascita, CURDATE()) AS paziente_eta,
-    p.sesso AS paziente_sesso,
-    p.patologie_croniche AS paziente_patologie,
+    p.sesso                AS paziente_sesso,
+    p.patologie_croniche   AS paziente_patologie,
 
-    -- Dati Tutore (chi ha prenotato)
-    ut.id AS tutore_user_id,
-    ut.email AS tutore_email,
-    CONCAT(ut.nome, ' ', ut.cognome) AS tutore_nome_completo,
-    ut.nome AS tutore_nome,
-    ut.cognome AS tutore_cognome,
-    ut.telefono AS tutore_telefono,
-    pt.relazione AS tutore_relazione,
-
-    -- Dati Medico/Specialista
-    m.id AS medico_id,
-    um.id AS medico_user_id,
+    -- MEDICO
+    m.id                   AS medico_id,
+    um.id                  AS medico_user_id,
     CONCAT(um.nome, ' ', um.cognome) AS medico_nome_completo,
-    um.nome AS medico_nome,
-    um.cognome AS medico_cognome,
-    um.email AS medico_email,
-    um.telefono AS medico_telefono,
-    m.specializzazione AS medico_specializzazione,
-    m.numero_albo AS medico_numero_albo,
-    m.rating_medio AS medico_rating,
+    um.nome                AS medico_nome,
+    um.cognome             AS medico_cognome,
+    um.email               AS medico_email,
+    um.telefono            AS medico_telefono,
+    m.specializzazione     AS medico_specializzazione,
+    m.numero_albo          AS medico_numero_albo,
+    m.rating_medio         AS medico_rating,
     m.durata_visita_minuti AS medico_durata_visita,
 
-    -- Flag utili
+    -- FLAG
     CASE WHEN pr.data_ora > NOW() THEN 1 ELSE 0 END AS is_futura,
     CASE WHEN DATE(pr.data_ora) = CURDATE() THEN 1 ELSE 0 END AS is_oggi,
-    DATEDIFF(pr.data_ora, NOW()) AS giorni_mancanti
+    (TO_DAYS(pr.data_ora) - TO_DAYS(NOW())) AS giorni_mancanti
 
 FROM prenotazioni pr
-INNER JOIN pazienti p ON pr.paziente_id = p.id
-LEFT JOIN pazienti_tutori pt ON p.id = pt.paziente_id
-LEFT JOIN tutori_legali tl ON pt.tutore_id = tl.id
-LEFT JOIN users ut ON tl.user_id = ut.id
-INNER JOIN medici m ON pr.medico_id = m.id
-INNER JOIN users um ON m.user_id = um.id;
+JOIN pazienti p ON pr.paziente_id = p.id
+JOIN medici m   ON pr.medico_id = m.id
+JOIN users um   ON m.user_id = um.id;
 
 -- ============================================================
 -- VISTA: v_tutori_completi

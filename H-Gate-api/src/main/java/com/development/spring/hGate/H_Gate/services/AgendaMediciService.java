@@ -4,7 +4,6 @@ import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.entity.VAgendaMedici;
 import com.development.spring.hGate.H_Gate.repositories.AgendaMediciRepository;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
-import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -78,15 +78,23 @@ public class Paziente extends BasicEntity {
     // Relazioni
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Prenotazione> prenotazioni = new ArrayList<>();
+    private List<Prenotazione> prenotazioni;
 
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Referto> referti = new ArrayList<>();
+    private List<Referto> referti;
 
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Recensione> recensioni = new ArrayList<>();
+    private List<Recensione> recensioni;
+
+    @OneToMany(
+            mappedBy = "paziente",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<PazienteTutore> tutori;
 
 
 

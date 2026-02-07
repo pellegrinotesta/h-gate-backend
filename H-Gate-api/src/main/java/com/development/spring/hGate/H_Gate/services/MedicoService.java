@@ -1,7 +1,9 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.entity.Medico;
+import com.development.spring.hGate.H_Gate.entity.TariffeMedici;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
+import com.development.spring.hGate.H_Gate.repositories.TariffeMediciRepository;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import java.util.List;
 public class MedicoService extends BasicService {
 
     private final MedicoRepository medicoRepository;
+    private final TariffeMediciRepository tariffeMediciRepository;
 
     private static final String MEDICO_ID_NOT_FOUND = "Medico with id %d not found.";
 
@@ -36,5 +39,9 @@ public class MedicoService extends BasicService {
         medicoExisting.setUniversita(medico.getUniversita());
 
         return medicoRepository.save(medicoExisting);
+    }
+
+    public List<TariffeMedici> listaTariffeMedico(Integer medicoId) {
+        return tariffeMediciRepository.findByMedicoId(medicoId);
     }
 }

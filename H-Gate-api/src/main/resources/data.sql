@@ -145,6 +145,77 @@ VALUES
  (SELECT id FROM tutori_legali WHERE user_id = (SELECT id FROM users WHERE email = 'stefano.colombo@email.com')),
  'PADRE');
 
+INSERT INTO tariffe_medici
+(medico_id, tipo_visita, is_prima_visita, costo, durata_minuti)
+VALUES
+-- ======================
+-- Mario Rossi – Neuropsichiatra
+-- ======================
+((SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+ 'Prima visita Neuropsichiatrica', TRUE, 130.00, 90),
+
+((SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+ 'Visita di controllo Neuropsichiatrica', FALSE, 100.00, 60),
+
+-- ======================
+-- Laura Ferrari – Psicologa
+-- ======================
+((SELECT id FROM medici WHERE numero_albo = 'RM67890'),
+ 'Colloquio Psicologico Età Evolutiva', TRUE, 90.00, 60),
+
+((SELECT id FROM medici WHERE numero_albo = 'RM67890'),
+ 'Colloquio Psicologico Età Evolutiva', FALSE, 80.00, 50),
+
+-- ======================
+-- Giulia Bianchi – Logopedista
+-- ======================
+((SELECT id FROM medici WHERE numero_albo = 'MI11223'),
+ 'Seduta di Logopedia', FALSE, 60.00, 45);
+
+
+INSERT INTO disponibilita_medici
+(medico_id, giorno_settimana, ora_inizio, ora_fine)
+VALUES
+-- Mario Rossi
+((SELECT id FROM medici WHERE numero_albo = 'RM12345'), 1, '09:00', '13:00'),
+((SELECT id FROM medici WHERE numero_albo = 'RM12345'), 3, '14:00', '18:00'),
+
+-- Laura Ferrari
+((SELECT id FROM medici WHERE numero_albo = 'RM67890'), 2, '09:00', '13:00'),
+((SELECT id FROM medici WHERE numero_albo = 'RM67890'), 4, '14:00', '18:00'),
+
+-- Giulia Bianchi
+((SELECT id FROM medici WHERE numero_albo = 'MI11223'), 1, '10:00', '15:00'),
+((SELECT id FROM medici WHERE numero_albo = 'MI11223'), 5, '09:00', '13:00');
+
+
+INSERT INTO recensioni
+(prenotazione_id, paziente_id, medico_id, rating, titolo, commento, is_verificata)
+VALUES
+(
+ (SELECT id FROM prenotazioni WHERE numero_prenotazione = 'NPI20250115001'),
+ (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
+ (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+ 5,
+ 'Professionista eccellente',
+ 'Molto attento e chiaro nelle spiegazioni.',
+ TRUE
+);
+
+
+INSERT INTO percorsi_terapeutici
+(paziente_id, medico_id, titolo, obiettivi, numero_sedute_previste)
+VALUES
+(
+ (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
+ (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+ 'Percorso ADHD',
+ 'Migliorare attenzione e regolazione emotiva',
+ 12
+);
+
+
+
 -- ============================================================
 -- RIEPILOGO DATI INSERITI
 -- ============================================================

@@ -70,4 +70,10 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
 
     @Query("SELECT COUNT(p) FROM Prenotazione p WHERE DATE(p.dataOra) = :data")
     Long countByData(@Param("data") LocalDate data);
+
+    List<Prenotazione> findByStatoAndDataOraBetweenAndPromemoriaInviatoFalse(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime domaniInizio, LocalDateTime domaniFine);
+
+    List<Prenotazione> findByStatoAndCreatedAtBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime limite);
+
+    List<Prenotazione> findByStatoAndDataOraFineBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime unaOraFa);
 }

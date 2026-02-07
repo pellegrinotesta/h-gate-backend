@@ -322,8 +322,16 @@ CREATE TABLE `recensioni` (
 CREATE TABLE `notifiche` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT NOT NULL,
-    `tipo` ENUM('PRENOTAZIONE_CONFERMATA', 'PRENOTAZIONE_MODIFICATA', 'PRENOTAZIONE_ANNULLATA',
-              'REFERTO_DISPONIBILE', 'PROMEMORIA_VISITA', 'SISTEMA') NOT NULL,
+    `tipo` ENUM(
+               'PRENOTAZIONE_CONFERMATA',
+               'PRENOTAZIONE_MODIFICATA',
+               'PRENOTAZIONE_ANNULLATA',
+               'REFERTO_DISPONIBILE',
+               'PROMEMORIA_VISITA',
+               'SISTEMA',
+               'NUOVA_PRENOTAZIONE',    -- Aggiunto
+               'CONFERMA_PRENOTAZIONE', -- Aggiunto
+               'RIFIUTO_PRENOTAZIONE'   -- Aggiunto NOT NULL,
     `titolo` VARCHAR(200) NOT NULL,
     `messaggio` TEXT NOT NULL,
     `link` VARCHAR(500) NULL,
@@ -526,9 +534,8 @@ WHERE r.role = 'MEDICO';
 -- VISTA: v_prenotazioni_dettagliate
 -- Appuntamenti con info complete paziente, tutore e medico
 -- ============================================================
-DROP VIEW IF EXISTS `v_prenotazioni_dettagliate`;
 
-CREATE VIEW v_prenotazioni_dettagliate AS
+CREATE OR REPLACE VIEW v_prenotazioni_dettagliate AS
 SELECT
     pr.id                  AS id,
     pr.uuid                AS uuid,

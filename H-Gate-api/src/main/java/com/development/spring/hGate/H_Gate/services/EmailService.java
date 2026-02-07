@@ -1,26 +1,53 @@
 package com.development.spring.hGate.H_Gate.services;
 
+import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
 
-//    private final JavaMailSender javaMailSender;
-//    private final UserService userService;
-//
-//    private final String allowedOrigins;
-//
-//    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
-//
-//    public EmailService(@Value("${application.cors.allowedOrigins}") String allowedOrigins,
-//                        @Lazy UserService userService, JavaMailSender javaMailSender) {
-//        super();
-//        this.userService = userService;
-//        this.javaMailSender = javaMailSender;
-//        this.allowedOrigins = allowedOrigins;
-//    }
-//
-//
+    private final JavaMailSender javaMailSender;
+    private final UserService userService;
+
+    private final String allowedOrigins;
+
+    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
+
+    public EmailService(@Value("${application.cors.allowedOrigins}") String allowedOrigins,
+                        @Lazy UserService userService, JavaMailSender javaMailSender) {
+        super();
+        this.userService = userService;
+        this.javaMailSender = javaMailSender;
+        this.allowedOrigins = allowedOrigins;
+    }
+
+    @Async
+    public void inviaEmail(String email, String titolo, String messaggio) {
+
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(email);
+            helper.setSubject(titolo);
+            helper.setText(messaggio, true);
+
+            javaMailSender.send(message);
+
+            logger.info("Email sent successfully");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+
+
 //    public void sendResetPassword(String token, Users user) {
 //        try {
 //            MimeMessage message = javaMailSender.createMimeMessage();
@@ -43,7 +70,7 @@ public class EmailService {
 //            throw new RuntimeException("Failed to send email", e);
 //        }
 //    }
-//
+
 //    @Async
 //    public void notifyUnauthorizedAccess(User userAttemptedAccess) {
 //
@@ -72,8 +99,8 @@ public class EmailService {
 //        }
 //
 //    }
-//
-//
+
+
 //    public void sendTempPasswordEmail(String email, String password) {
 //        try {
 //            MimeMessage message = javaMailSender.createMimeMessage();

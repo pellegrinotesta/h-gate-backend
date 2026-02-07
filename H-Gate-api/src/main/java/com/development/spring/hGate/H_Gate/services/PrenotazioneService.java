@@ -1,7 +1,6 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibileDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
@@ -27,7 +26,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,12 +40,13 @@ public class PrenotazioneService extends BasicService {
     private final TutoreLegaleRepository tutoreLegaleRepository;
     private final PazienteTutoreRepository pazienteTutoreRepository;
     private final TariffeMediciRepository tariffeMediciRepository;
+    private final NotificheService notificheService;
 
     private static final String PAZIENTE_NOT_FOUND = "Paziente non trovato";
     private static final String MEDICO_NOT_FOUND = "Medico non trovato";
     private static final String TUTORE_NOT_AUTHORIZED = "Non sei autorizzato a prenotare per questo paziente";
     private static final String SLOT_NOT_AVAILABLE = "Orario non disponibile";
-    private static final String MEDICO_NOT_AVAILABLE = "Il medico non è disponibile in questo orario";
+    private static final String PRENOTAZIONE_NOT_FOUND = "Prenotazione non trovata";
 
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -78,12 +77,6 @@ public class PrenotazioneService extends BasicService {
         if(dataOra.isBefore(now.plusHours(1))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La prenotazione deve essere effettuata con almeno 1 ora di anticipo");
         }
-
-//        int anticipoGiorni = medico.getAnticipoPrenotazioneGiorni() != null ? medico.getAnticipoPrenotazioneGiorni() : 30;
-//
-//        if(dataOra.isAfter(now.plusHours(anticipoGiorni))) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Puoi prenotare solo fino a " + anticipoGiorni + " giorni in anticipo");
-//        }
 
         int durataMinuti = medico.getDurataVisitaMinuti() != null ? medico.getDurataVisitaMinuti() : 30;
         LocalDateTime dataOraFine = dataOra.plusMinutes(durataMinuti);
@@ -127,17 +120,65 @@ public class PrenotazioneService extends BasicService {
 
         prenotazione = prenotazioneRepository.save(prenotazione);
 
-        return  prenotazione;
+        try {
+            notificheService.notificaNuovaPrenotazioneMedico(prenotazione);
+            logger.info("Notifica inviata al medico per prenotazione ID: {}", prenotazione.getId());
+        } catch (Exception e) {
+            // Non bloccare la prenotazione se la notifica fallisce
+            logger.error("Errore invio notifica al medico", e);
+        }
 
+        return  prenotazione;
     }
 
     private String generaNumeroPrenotazione() {
-
         LocalDate today = LocalDate.now();
         String data = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         long progressivo = prenotazioneRepository.countByData(today) + 1;
         String progressivoFormatted = String.format("%03d", progressivo);
         return "NPI" + data + progressivoFormatted;
+    }
+
+    @Transactional
+    public Prenotazione confermaPrenotazione(Integer medicoUserId, Integer prenotazioneId) {
+        logger.info("Medico userId: {} conferma prenotazione ID: {}", medicoUserId, prenotazioneId);
+
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        PRENOTAZIONE_NOT_FOUND
+                ));
+
+        Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
+
+        if (!prenotazione.getMedico().getId().equals(medico.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Non sei autorizzato a confermare questa prenotazione"
+            );
+        }
+
+        if (prenotazione.getStato() != StatoPrenotazioneEnum.IN_ATTESA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Questa prenotazione non è in attesa di conferma"
+            );
+        }
+
+        prenotazione.setStato(StatoPrenotazioneEnum.CONFERMATA);
+        prenotazione.setConfermaInviata(true);
+
+        prenotazione = prenotazioneRepository.save(prenotazione);
+        logger.info("Prenotazione ID: {} confermata", prenotazioneId);
+
+        // Notifica al paziente
+        try {
+            notificheService.notificaConfermaPrenotazionePaziente(prenotazione);
+        } catch (Exception e) {
+            logger.error("Errore invio notifica conferma al paziente", e);
+        }
+
+        return prenotazione;
     }
 
 

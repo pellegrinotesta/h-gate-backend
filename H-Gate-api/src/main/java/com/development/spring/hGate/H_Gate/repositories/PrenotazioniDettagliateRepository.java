@@ -80,4 +80,10 @@ public interface PrenotazioniDettagliateRepository extends CrudRepository<VPreno
             @Param("endOfDay") LocalDateTime endOfDay,
             @Param("stati") List<String> stati
     );
+
+    @Query("SELECT v FROM VPrenotazioniDettagliate v " +
+            "WHERE v.medicoUserId = :medicoUserId " +
+            "AND v.stato IN :stati " +
+            "ORDER BY v.dataOra ASC")
+    List<VPrenotazioniDettagliate> findByMedicoUserIdAndStatoIn(@Param("medicoUserId") Integer medicoUserId, @Param("stati") List<String> stati);
 }

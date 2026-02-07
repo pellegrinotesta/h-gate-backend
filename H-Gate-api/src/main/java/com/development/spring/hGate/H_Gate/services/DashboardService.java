@@ -4,13 +4,16 @@ import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardAdminResponse
 import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardMedicoResponse;
 import com.development.spring.hGate.H_Gate.dtos.dashboard.DashboardPazienteResponse;
 import com.development.spring.hGate.H_Gate.entity.Medico;
+import com.development.spring.hGate.H_Gate.entity.Users;
 import com.development.spring.hGate.H_Gate.mappers.RefertoMapper;
 import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
+import com.development.spring.hGate.H_Gate.repositories.UserRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class DashboardService extends BasicService {
     private final RefertoMapper refertoMapper;
     private final MedicoRepository medicoRepository;
     private final PrenotazioneService prenotazioneService;
+    private final UserRepository userRepository;
 
     /**
      * Dashboard per il TUTORE
@@ -43,8 +47,10 @@ public class DashboardService extends BasicService {
      */
     public DashboardMedicoResponse dashboardMedico(Integer medicoUserId) {
         Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
+        Users user = userRepository.findById(medicoUserId).orElseThrow(() -> buildEntityWithIdNotFoundException(medico.getId(), "Utente non trovato"));
 
         return DashboardMedicoResponse.builder()
+                .nomeMedico(user.getNomeCompleto())
                 .visiteOggi(prenotazioniDettagliateService.visiteOggi(medicoUserId))
                 .pazientiTotali(prenotazioniDettagliateService.pazientiTotali(medicoUserId))
                 .refertiDaFirmare(prenotazioniDettagliateService.refertiDaFirmare(medicoUserId))

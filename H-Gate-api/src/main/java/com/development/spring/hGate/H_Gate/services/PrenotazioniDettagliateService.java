@@ -118,18 +118,16 @@ public class PrenotazioniDettagliateService extends BasicService {
      * Ottiene gli appuntamenti di oggi del medico
      */
     public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+//        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+//        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         List<String> stati = List.of(
                 StatoPrenotazioneEnum.CONFERMATA.name(),
                 StatoPrenotazioneEnum.IN_ATTESA.name()
         );
 
         List<VPrenotazioniDettagliate> prenotazioni = prenotazioniDettagliateRepository
-                .findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(
+                .findByMedicoUserIdAndStatoIn(
                         medicoUserId,
-                        startOfDay,
-                        endOfDay,
                         stati
                 );
 

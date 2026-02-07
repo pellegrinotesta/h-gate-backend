@@ -379,22 +379,6 @@ CREATE TABLE `eccezioni_disponibilita` (
     CHECK (`data_fine` >= `data_inizio`)
 );
 
-CREATE TABLE tariffe_medici (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    medico_id INT NOT NULL,
-    tipo_visita VARCHAR(100) NOT NULL,
-    is_prima_visita BOOLEAN DEFAULT FALSE,
-    costo DECIMAL(10,2) NOT NULL,
-    durata_minuti INT NULL,
-    is_attiva BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (medico_id) REFERENCES medici(id) ON DELETE CASCADE,
-
-    UNIQUE KEY uk_medico_tipo (medico_id, tipo_visita, is_prima_visita),
-    CHECK (costo >= 0)
-);
-
 CREATE TABLE `audit_log` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT NULL,
@@ -493,9 +477,8 @@ LEFT JOIN users u ON tl.user_id = u.id;
 -- ============================================================
 DROP VIEW IF EXISTS `v_medici_completi`;
 
-CREATE VIEW `v_medici_completi` AS
+CREATE VIEW v_medici_completi AS
 SELECT
-    -- Dati User
     u.id AS user_id,
     u.uuid,
     u.email,
@@ -511,7 +494,6 @@ SELECT
     u.is_verified,
     u.created_at,
 
-    -- Dati Medico
     m.id AS medico_id,
     m.specializzazione,
     m.numero_albo,
@@ -519,7 +501,6 @@ SELECT
     m.anno_laurea,
     m.bio,
     m.curriculum,
-    m.tariffe,
     m.orari_disponibilita,
     m.durata_visita_minuti,
     m.pausa_tra_visite_minuti,
@@ -531,7 +512,6 @@ SELECT
     m.numero_recensioni,
     m.numero_pazienti,
 
-    -- Statistiche
     (SELECT COUNT(*) FROM prenotazioni pr WHERE pr.medico_id = m.id) AS totale_prenotazioni,
     (SELECT COUNT(*) FROM prenotazioni pr WHERE pr.medico_id = m.id AND pr.stato = 'COMPLETATA') AS prenotazioni_completate,
     (SELECT COUNT(*) FROM disponibilita_medici dm WHERE dm.medico_id = m.id AND dm.is_attiva = TRUE) AS fasce_disponibilita
@@ -541,17 +521,14 @@ INNER JOIN medici m ON u.id = m.user_id
 INNER JOIN roles r ON r.user_id = u.id
 WHERE r.role = 'MEDICO';
 
+
 -- ============================================================
 -- VISTA: v_prenotazioni_dettagliate
 -- Appuntamenti con info complete paziente, tutore e medico
 -- ============================================================
 DROP VIEW IF EXISTS `v_prenotazioni_dettagliate`;
 
-CREATE
-ALGORITHM = UNDEFINED
-DEFINER = `h_gate_user`@`%`
-SQL SECURITY DEFINER
-VIEW v_prenotazioni_dettagliate AS
+CREATE VIEW v_prenotazioni_dettagliate AS
 SELECT
     pr.id                  AS id,
     pr.uuid                AS uuid,
@@ -731,52 +708,48 @@ SELECT
     (SELECT COUNT(*) FROM notifiche WHERE is_letta = FALSE) AS notifiche_non_lette;
 
 -- ============================================================
--- VISTA: v_agenda_giornaliera
--- Appuntamenti del giorno per tutti i medici
+-- VISTA: v_agenda_medici
+-- Appuntamenti di tutti i medici
 -- ============================================================
-DROP VIEW IF EXISTS `v_agenda_giornaliera`;
 
-CREATE VIEW `v_agenda_giornaliera` AS
+CREATE OR REPLACE VIEW `v_agenda_medici` AS
 SELECT
-    DATE(pr.data_ora) AS data,
-    TIME(pr.data_ora) AS ora_inizio,
-    TIME(pr.data_ora_fine) AS ora_fine,
+    pr.id                 AS evento_id,
+    pr.data_ora           AS inizio,
+    pr.data_ora_fine      AS fine,
 
-    -- Medico
-    m.id AS medico_id,
-    CONCAT(um.nome, ' ', um.cognome) AS medico_nome,
+    m.id                  AS medico_id,
+    CONCAT(um.nome,' ',um.cognome) AS medico_nome,
     m.specializzazione,
 
-    -- Paziente
-    p.id AS paziente_id,
-    CONCAT(p.nome, ' ', p.cognome) AS paziente_nome,
-    TIMESTAMPDIFF(YEAR, p.data_nascita, CURDATE()) AS paziente_eta,
+    p.id                  AS paziente_id,
+    CONCAT(p.nome,' ',p.cognome) AS paziente_nome,
 
-    -- Tutore
-    CONCAT(ut.nome, ' ', ut.cognome) AS tutore_nome,
-    ut.telefono AS tutore_telefono,
+    CONCAT(ut.nome,' ',ut.cognome) AS tutore_nome,
+    ut.telefono            AS tutore_telefono,
 
-    -- Prenotazione
     pr.tipo_visita,
     pr.stato,
     pr.is_prima_visita,
     pr.note_paziente,
-
-    -- Flags
-    CASE WHEN pr.conferma_inviata = TRUE THEN 'Confermato' ELSE 'Da confermare' END AS stato_conferma,
-    CASE WHEN pr.promemoria_inviato = TRUE THEN 'Inviato' ELSE 'Da inviare' END AS stato_promemoria
-
+    pr.promemoria_inviato,
+    pr.conferma_inviata
 FROM prenotazioni pr
-INNER JOIN medici m ON pr.medico_id = m.id
-INNER JOIN users um ON m.user_id = um.id
-INNER JOIN pazienti p ON pr.paziente_id = p.id
-LEFT JOIN pazienti_tutori pt ON p.id = pt.paziente_id
+JOIN medici m        ON pr.medico_id = m.id
+JOIN users um        ON m.user_id = um.id
+JOIN pazienti p      ON pr.paziente_id = p.id
+LEFT JOIN (
+    SELECT paziente_id, MIN(tutore_id) AS tutore_id
+    FROM pazienti_tutori
+    GROUP BY paziente_id
+) pt ON p.id = pt.paziente_id
 LEFT JOIN tutori_legali tl ON pt.tutore_id = tl.id
-LEFT JOIN users ut ON tl.user_id = ut.id
-WHERE DATE(pr.data_ora) = CURDATE()
-AND pr.stato IN ('CONFERMATA', 'IN_ATTESA')
-ORDER BY pr.data_ora;
+LEFT JOIN users ut ON tl.user_id = ut.id;
 
+-- ============================================================
+-- VISTA: v_dashboard_kpi
+-- Statistiche dashboard admin
+-- ============================================================
 
 DROP VIEW IF EXISTS v_dashboard_kpi;
 

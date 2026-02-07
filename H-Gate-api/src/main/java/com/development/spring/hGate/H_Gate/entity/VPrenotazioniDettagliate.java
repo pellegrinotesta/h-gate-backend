@@ -107,9 +107,6 @@ public class VPrenotazioniDettagliate extends BasicEntity {
     @Column(name = "tutore_telefono")
     private String tutoreTelefono;
 
-    @Column(name = "tutore_relazione")
-    private String tutoreRelazione;
-
     // Dati Medico
     @Column(name = "medico_id")
     private Long medicoId;

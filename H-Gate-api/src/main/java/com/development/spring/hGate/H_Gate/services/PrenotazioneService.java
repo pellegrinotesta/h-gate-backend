@@ -101,7 +101,6 @@ public class PrenotazioneService extends BasicService {
                         "Tariffa non configurata"
                 ));
 
-
         Prenotazione prenotazione = Prenotazione.builder()
                 .uuid(UUID.randomUUID().toString())
                 .numeroPrenotazione(generaNumeroPrenotazione())
@@ -116,6 +115,7 @@ public class PrenotazioneService extends BasicService {
                 .isPrimaVisita(dto.isPrimaVisita())
                 .isUrgente(false)
                 .confermaInviata(false)
+                .createdByUserId(tutore.getUser())
                 .build();
 
         prenotazione = prenotazioneRepository.save(prenotazione);

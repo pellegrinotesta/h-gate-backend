@@ -140,7 +140,7 @@ CREATE TABLE pazienti_tutori (
 );
 
 CREATE TABLE percorsi_terapeutici (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     paziente_id INTEGER NOT NULL,
     medico_id INTEGER NOT NULL,
     titolo VARCHAR(200) NOT NULL,
@@ -209,10 +209,12 @@ CREATE TABLE `prenotazioni` (
     `is_urgente` BOOLEAN DEFAULT FALSE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `created_by_user_id` INT NOT NULL,
 
     FOREIGN KEY (`paziente_id`) REFERENCES `pazienti`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`medico_id`) REFERENCES `medici`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`annullata_da`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
 
     INDEX `idx_paziente` (`paziente_id`),
     INDEX `idx_medico` (`medico_id`),
@@ -222,6 +224,7 @@ CREATE TABLE `prenotazioni` (
     INDEX `idx_uuid` (`uuid`),
     INDEX `idx_created_at` (`created_at`),
     INDEX `idx_medico_data` (`medico_id`, `data_ora`, `stato`),
+    INDEX `idx_created_by_user_id` (`created_by_user_id`),
 
     CHECK (`data_ora_fine` > `data_ora`),
     CHECK (`costo` >= 0)
@@ -331,7 +334,7 @@ CREATE TABLE `notifiche` (
                'SISTEMA',
                'NUOVA_PRENOTAZIONE',    -- Aggiunto
                'CONFERMA_PRENOTAZIONE', -- Aggiunto
-               'RIFIUTO_PRENOTAZIONE'   -- Aggiunto NOT NULL,
+               'RIFIUTO_PRENOTAZIONE') NOT NULL,   -- Aggiunto NOT NULL,
     `titolo` VARCHAR(200) NOT NULL,
     `messaggio` TEXT NOT NULL,
     `link` VARCHAR(500) NULL,
@@ -554,7 +557,9 @@ SELECT
     pr.created_at          AS created_at,
     pr.updated_at          AS updated_at,
 
+    -- =========================
     -- PAZIENTE
+    -- =========================
     p.id                   AS paziente_id,
     CONCAT(p.nome, ' ', p.cognome) AS paziente_nome_completo,
     p.nome                 AS paziente_nome,
@@ -565,7 +570,19 @@ SELECT
     p.sesso                AS paziente_sesso,
     p.patologie_croniche   AS paziente_patologie,
 
+    -- =========================
+    -- TUTORE CHE HA PRENOTATO
+    -- =========================
+    ut.id                  AS tutore_user_id,
+    CONCAT(ut.nome, ' ', ut.cognome) AS tutore_nome_completo,
+    ut.nome                AS tutore_nome,
+    ut.cognome             AS tutore_cognome,
+    ut.email               AS tutore_email,
+    ut.telefono            AS tutore_telefono,
+
+    -- =========================
     -- MEDICO
+    -- =========================
     m.id                   AS medico_id,
     um.id                  AS medico_user_id,
     CONCAT(um.nome, ' ', um.cognome) AS medico_nome_completo,
@@ -578,15 +595,19 @@ SELECT
     m.rating_medio         AS medico_rating,
     m.durata_visita_minuti AS medico_durata_visita,
 
+    -- =========================
     -- FLAG
+    -- =========================
     CASE WHEN pr.data_ora > NOW() THEN 1 ELSE 0 END AS is_futura,
     CASE WHEN DATE(pr.data_ora) = CURDATE() THEN 1 ELSE 0 END AS is_oggi,
-    (TO_DAYS(pr.data_ora) - TO_DAYS(NOW())) AS giorni_mancanti
+    DATEDIFF(pr.data_ora, NOW()) AS giorni_mancanti
 
 FROM prenotazioni pr
-JOIN pazienti p ON pr.paziente_id = p.id
-JOIN medici m   ON pr.medico_id = m.id
-JOIN users um   ON m.user_id = um.id;
+JOIN pazienti p        ON pr.paziente_id = p.id
+JOIN medici m          ON pr.medico_id = m.id
+JOIN users um          ON m.user_id = um.id
+LEFT JOIN users ut     ON pr.created_by_user_id = ut.id;
+
 
 -- ============================================================
 -- VISTA: v_tutori_completi
@@ -719,39 +740,40 @@ SELECT
 -- Appuntamenti di tutti i medici
 -- ============================================================
 
-CREATE OR REPLACE VIEW `v_agenda_medici` AS
+CREATE OR REPLACE VIEW v_agenda_medici AS
 SELECT
-    pr.id                 AS evento_id,
-    pr.data_ora           AS inizio,
-    pr.data_ora_fine      AS fine,
+    pr.id AS evento_id,
+    pr.data_ora AS inizio,
+    pr.data_ora_fine AS fine,
 
-    m.id                  AS medico_id,
-    CONCAT(um.nome,' ',um.cognome) AS medico_nome,
+    -- MEDICO
+    m.id AS medico_id,
+    CONCAT(um.nome, ' ', um.cognome) AS medico_nome,
     m.specializzazione,
 
-    p.id                  AS paziente_id,
-    CONCAT(p.nome,' ',p.cognome) AS paziente_nome,
+    -- PAZIENTE
+    p.id AS paziente_id,
+    CONCAT(p.nome, ' ', p.cognome) AS paziente_nome,
 
-    CONCAT(ut.nome,' ',ut.cognome) AS tutore_nome,
-    ut.telefono            AS tutore_telefono,
+    -- TUTORE CHE HA PRENOTATO
+    ut.id AS tutore_user_id,
+    CONCAT(ut.nome, ' ', ut.cognome) AS tutore_nome,
+    ut.telefono AS tutore_telefono,
 
+    -- INFO VISITA
     pr.tipo_visita,
     pr.stato,
     pr.is_prima_visita,
     pr.note_paziente,
     pr.promemoria_inviato,
     pr.conferma_inviata
+
 FROM prenotazioni pr
-JOIN medici m        ON pr.medico_id = m.id
-JOIN users um        ON m.user_id = um.id
-JOIN pazienti p      ON pr.paziente_id = p.id
-LEFT JOIN (
-    SELECT paziente_id, MIN(tutore_id) AS tutore_id
-    FROM pazienti_tutori
-    GROUP BY paziente_id
-) pt ON p.id = pt.paziente_id
-LEFT JOIN tutori_legali tl ON pt.tutore_id = tl.id
-LEFT JOIN users ut ON tl.user_id = ut.id;
+JOIN medici m      ON pr.medico_id = m.id
+JOIN users um      ON m.user_id = um.id
+JOIN pazienti p    ON pr.paziente_id = p.id
+LEFT JOIN users ut ON pr.created_by_user_id = ut.id;
+
 
 -- ============================================================
 -- VISTA: v_dashboard_kpi

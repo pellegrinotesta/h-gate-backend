@@ -9,12 +9,15 @@ import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +59,9 @@ public class NotificheService extends BasicService {
             // 2. Invia email se richiesto
             if (inviaEmail) {
                 try {
-                    emailService.inviaEmail(user.getEmail(), titolo, messaggio);
+                    // Accedi all'email DENTRO la transazione
+                    String userEmail = user.getEmail();
+                    emailService.inviaEmail(userEmail, titolo, messaggio);
                     notifica.setIsInviataEmail(true);
                     notifica.setDataInvioEmail(LocalDateTime.now());
                     notificaRepository.save(notifica);
@@ -79,8 +84,14 @@ public class NotificheService extends BasicService {
     /**
      * Notifica al medico: nuova prenotazione da confermare
      */
+    @Transactional(readOnly = true)
     public void notificaNuovaPrenotazioneMedico(Prenotazione prenotazione) {
         Users medicoUser = prenotazione.getMedico().getUser();
+
+        // Inizializza i dati lazy DENTRO la transazione
+        String medicoNome = medicoUser.getNome();
+        String pazienteNome = prenotazione.getPaziente().getNome();
+        String pazienteCognome = prenotazione.getPaziente().getCognome();
 
         String titolo = "Nuova prenotazione da confermare";
 
@@ -91,8 +102,8 @@ public class NotificheService extends BasicService {
                         "Numero: %s\n\n" +
                         "Accedi per confermare o rifiutare l'appuntamento.",
                 prenotazione.getDataOra().format(DATE_FORMATTER),
-                prenotazione.getPaziente().getNome(),
-                prenotazione.getPaziente().getCognome(),
+                pazienteNome,
+                pazienteCognome,
                 prenotazione.getTipoVisita(),
                 prenotazione.getNumeroPrenotazione()
         );
@@ -105,16 +116,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Notifica al paziente: prenotazione confermata dal medico
      */
+    @Transactional(readOnly = true)
     public void notificaConfermaPrenotazionePaziente(Prenotazione prenotazione) {
-
         Users pazienteUser = getTutoreUser(prenotazione);
+
+        // Inizializza lazy loads
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
 
         String titolo = "Prenotazione confermata";
 
@@ -125,8 +140,8 @@ public class NotificheService extends BasicService {
                         "Tipo visita: %s\n" +
                         "Costo: €%.2f\n\n" +
                         "Ti ricordiamo di presentarti 10 minuti prima.",
-                prenotazione.getMedico().getUser().getNome(),
-                prenotazione.getMedico().getUser().getCognome(),
+                medicoNome,
+                medicoCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER),
                 prenotazione.getTipoVisita(),
                 prenotazione.getCosto()
@@ -140,15 +155,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Promemoria 24 ore prima dell'appuntamento
      */
+    @Transactional(readOnly = true)
     public void inviaPromemoria24Ore(Prenotazione prenotazione) {
         Users pazienteUser = getTutoreUser(prenotazione);
+
+        // Inizializza lazy loads
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
 
         String titolo = "Promemoria: appuntamento domani";
 
@@ -161,8 +181,8 @@ public class NotificheService extends BasicService {
                         "✓ Presentarti 10 minuti prima\n" +
                         "✓ Portare documento di identità\n" +
                         "✓ Portare eventuali esami precedenti",
-                prenotazione.getMedico().getUser().getNome(),
-                prenotazione.getMedico().getUser().getCognome(),
+                medicoNome,
+                medicoCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER)
         );
 
@@ -174,15 +194,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Notifica al medico: prenotazione annullata dal paziente
      */
+    @Transactional(readOnly = true)
     public void notificaAnnullamentoMedico(Prenotazione prenotazione) {
         Users medicoUser = prenotazione.getMedico().getUser();
+
+        // Inizializza lazy loads
+        String pazienteNome = prenotazione.getPaziente().getNome();
+        String pazienteCognome = prenotazione.getPaziente().getCognome();
 
         String titolo = "Prenotazione annullata";
 
@@ -193,8 +218,8 @@ public class NotificheService extends BasicService {
                         "Numero: %s\n" +
                         "Motivo: %s\n\n" +
                         "Lo slot è ora nuovamente disponibile.",
-                prenotazione.getPaziente().getNome(),
-                prenotazione.getPaziente().getCognome(),
+                pazienteNome,
+                pazienteCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER),
                 prenotazione.getNumeroPrenotazione(),
                 prenotazione.getMotivoAnnullamento() != null
@@ -210,15 +235,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Conferma annullamento al paziente
      */
+    @Transactional(readOnly = true)
     public void notificaAnnullamentoPaziente(Prenotazione prenotazione) {
         Users pazienteUser = getTutoreUser(prenotazione);
+
+        // Inizializza lazy loads
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
 
         String titolo = "Prenotazione annullata";
 
@@ -227,8 +257,8 @@ public class NotificheService extends BasicService {
                         "Medico: Dr. %s %s\n" +
                         "Data e ora: %s\n\n" +
                         "Puoi effettuare una nuova prenotazione in qualsiasi momento.",
-                prenotazione.getMedico().getUser().getNome(),
-                prenotazione.getMedico().getUser().getCognome(),
+                medicoNome,
+                medicoCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER)
         );
 
@@ -240,15 +270,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Notifica al paziente: prenotazione rifiutata dal medico
      */
+    @Transactional(readOnly = true)
     public void notificaRifiutoPrenotazionePaziente(Prenotazione prenotazione) {
         Users pazienteUser = getTutoreUser(prenotazione);
+
+        // Inizializza lazy loads
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
 
         String titolo = "Prenotazione non confermata";
 
@@ -258,8 +293,8 @@ public class NotificheService extends BasicService {
                         "Data e ora: %s\n" +
                         "Motivo: %s\n\n" +
                         "Puoi cercare un altro medico o scegliere un'altra data.",
-                prenotazione.getMedico().getUser().getNome(),
-                prenotazione.getMedico().getUser().getCognome(),
+                medicoNome,
+                medicoCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER),
                 prenotazione.getMotivoAnnullamento() != null
                         ? prenotazione.getMotivoAnnullamento()
@@ -274,15 +309,20 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     /**
      * Notifica cancellazione automatica (prenotazione scaduta)
      */
+    @Transactional(readOnly = true)
     public void notificaCancellazioneAutomatica(Prenotazione prenotazione) {
         Users pazienteUser = getTutoreUser(prenotazione);
+
+        // Inizializza lazy loads
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
 
         String titolo = "Prenotazione scaduta";
 
@@ -292,8 +332,8 @@ public class NotificheService extends BasicService {
                         "Data e ora: %s\n\n" +
                         "Il medico non ha confermato la prenotazione entro le 48 ore.\n" +
                         "Puoi effettuare una nuova prenotazione.",
-                prenotazione.getMedico().getUser().getNome(),
-                prenotazione.getMedico().getUser().getCognome(),
+                medicoNome,
+                medicoCognome,
                 prenotazione.getDataOra().format(DATE_FORMATTER)
         );
 
@@ -305,11 +345,25 @@ public class NotificheService extends BasicService {
                 titolo,
                 messaggio,
                 link,
-                true // Invia anche email
+                true
         );
     }
 
     // ========== METODI UTILITY ==========
+
+    /**
+     * Helper per ottenere il tutore principale del paziente
+     * DEVE essere chiamato DENTRO una transazione
+     */
+    private Users getTutoreUser(Prenotazione prenotazione) {
+        return prenotazione.getPaziente()
+                .getTutori()
+                .stream()
+                .findFirst()
+                .map(pt -> pt.getTutore().getUser())
+                .orElseThrow(() ->
+                        new IllegalStateException("Nessun tutore associato al paziente"));
+    }
 
     /**
      * Marca notifica come letta
@@ -341,18 +395,39 @@ public class NotificheService extends BasicService {
     /**
      * Conta notifiche non lette
      */
+    @Transactional(readOnly = true)
     public Long contaNonLette(Integer userId) {
         return notificaRepository.countByUserIdAndIsLettaFalse(userId);
     }
 
-    private Users getTutoreUser(Prenotazione prenotazione) {
-        return prenotazione.getPaziente()
-                .getTutori()
-                .stream()
-                .findFirst() // regola: primo tutore
-                .map(pt -> pt.getTutore().getUser())
-                .orElseThrow(() ->
-                        new IllegalStateException("Nessun tutore associato al paziente"));
+    /**
+     * Ottiene tutte le notifiche di un utente (paginate)
+     */
+    @Transactional(readOnly = true)
+    public Page<Notifica> getNotificheUtente(Integer userId, Pageable pageable) {
+        return notificaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
+    /**
+     * Ottiene le notifiche non lette
+     */
+    @Transactional(readOnly = true)
+    public List<Notifica> getNotificheNonLette(Integer userId) {
+        return notificaRepository.findByUserIdAndIsLettaFalseOrderByCreatedAtDesc(userId);
+    }
+
+    /**
+     * Elimina una notifica (con controllo autorizzazione)
+     */
+    @Transactional
+    public void eliminaNotifica(Integer notificaId, Integer userId) {
+        Notifica notifica = notificaRepository.findById(notificaId)
+                .orElseThrow(() -> new IllegalArgumentException("Notifica non trovata"));
+
+        if (!notifica.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Non autorizzato");
+        }
+
+        notificaRepository.delete(notifica);
+    }
 }

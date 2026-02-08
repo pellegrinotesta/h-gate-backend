@@ -86,19 +86,48 @@ VALUES
 -- 5. PRENOTAZIONI
 -- ============================================================
 
-INSERT INTO `prenotazioni` (`uuid`, `numero_prenotazione`, `paziente_id`, `medico_id`, `data_ora`, `data_ora_fine`, `tipo_visita`, `stato`, `costo`, `is_prima_visita`)
+INSERT INTO prenotazioni
+(
+  uuid,
+  numero_prenotazione,
+  paziente_id,
+  medico_id,
+  created_by_user_id,
+  data_ora,
+  data_ora_fine,
+  tipo_visita,
+  stato,
+  costo,
+  is_prima_visita
+)
 VALUES
-(UUID(), 'NPI20250115001',
- (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
- (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
- '2025-01-15 09:00:00', '2025-01-15 10:00:00',
- 'Controllo ADHD', 'CONFERMATA', 100.00, FALSE),
+(
+  UUID(),
+  'NPI20250115001',
+  (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
+  (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+  (SELECT id FROM users WHERE email = 'anna.verdi@email.com'),
+  '2025-01-15 09:00:00',
+  '2025-01-15 10:00:00',
+  'Controllo ADHD',
+  'CONFERMATA',
+  100.00,
+  FALSE
+),
+(
+  UUID(),
+  'NPI20250116001',
+  (SELECT id FROM pazienti WHERE codice_fiscale = 'MRNSFO19D45H501Y'),
+  (SELECT id FROM medici WHERE numero_albo = 'MI11223'),
+  (SELECT id FROM users WHERE email = 'claudia.marino@email.com'),
+  '2025-01-16 10:30:00',
+  '2025-01-16 11:15:00',
+  'Seduta Logopedia',
+  'CONFERMATA',
+  60.00,
+  FALSE
+);
 
-(UUID(), 'NPI20250116001',
- (SELECT id FROM pazienti WHERE codice_fiscale = 'MRNSFO19D45H501Y'),
- (SELECT id FROM medici WHERE numero_albo = 'MI11223'),
- '2025-01-16 10:30:00', '2025-01-16 11:15:00',
- 'Seduta Logopedia', 'CONFERMATA', 60.00, FALSE);
 
 -- ============================================================
 -- 6. REFERTI

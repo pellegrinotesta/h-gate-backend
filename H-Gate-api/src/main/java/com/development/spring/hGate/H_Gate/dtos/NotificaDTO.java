@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificaDTO {
-
-    private UserDTO user;
+    
     private TipoNotificaEnum tipo;
     private String titolo;
     private String messaggio;

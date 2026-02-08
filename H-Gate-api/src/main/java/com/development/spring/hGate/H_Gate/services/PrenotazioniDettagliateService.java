@@ -157,7 +157,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                         .nome(v.getPazienteNome())
                         .cognome(v.getPazienteCognome())
                         .codiceFiscale(v.getPazienteCf())
-                        .email(v.getTutoreEmail()) // Email del tutore
+                        //.email(v.getTutoreEmail()) // Email del tutore
                         .build())
                 .build();
     }

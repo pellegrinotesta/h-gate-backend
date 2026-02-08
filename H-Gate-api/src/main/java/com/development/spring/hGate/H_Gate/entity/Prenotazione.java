@@ -44,6 +44,13 @@ public class Prenotazione extends BasicEntity {
     @JoinColumn(name = "medico_id", nullable = false)
     private Medico medico;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "created_by_user_id",
+            nullable = false
+    )
+    private Users createdByUserId;
+
     @NotNull
     @Column(name = "data_ora", nullable = false)
     private LocalDateTime dataOra;

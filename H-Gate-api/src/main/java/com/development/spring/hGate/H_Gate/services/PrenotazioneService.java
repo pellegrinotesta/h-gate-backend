@@ -124,7 +124,6 @@ public class PrenotazioneService extends BasicService {
             notificheService.notificaNuovaPrenotazioneMedico(prenotazione);
             logger.info("Notifica inviata al medico per prenotazione ID: {}", prenotazione.getId());
         } catch (Exception e) {
-            // Non bloccare la prenotazione se la notifica fallisce
             logger.error("Errore invio notifica al medico", e);
         }
 

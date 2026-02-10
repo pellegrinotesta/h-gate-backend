@@ -41,6 +41,7 @@ public class PrenotazioneController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<String> annullaPrenotazione(JwtAuthentication jwtAuthentication, @PathVariable Integer id, @Valid @RequestBody PrenotazioneAnnullaDTO dto) {
 
         ResponseDTO<String> res = new ResponseDTO<>();
@@ -59,6 +60,7 @@ public class PrenotazioneController {
     }
 
     @GetMapping("/disponibilita/{medicoId}")
+    @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<SlotDisponibiliDTO> verificaDisponibilita(@PathVariable Integer medicoId, @RequestParam String data) {
         ResponseDTO<SlotDisponibiliDTO> res = new ResponseDTO<>();
 
@@ -70,6 +72,21 @@ public class PrenotazioneController {
             res.setMessage(ex.getMessage());
         }
 
+        return res;
+    }
+
+    @PutMapping("/{prenotazioneId}/conferma")
+    @PreAuthorize("hasAuthority('MEDICO')")
+    public ResponseDTO<PrenotazioneDTO> confermaPrenotazione(JwtAuthentication jwtAuthentication, @PathVariable("prenotazioneId") Integer prenotazioneId) {
+        ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.confermaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
         return res;
     }
 

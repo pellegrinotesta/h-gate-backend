@@ -22,6 +22,7 @@ import java.util.Date;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class PrenotazioneDTO {
 
+    private Integer id;
     private String uuid;
     private String numeroPrenotazione;
     private PazienteMinDTO paziente;

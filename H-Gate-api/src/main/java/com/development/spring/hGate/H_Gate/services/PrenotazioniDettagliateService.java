@@ -147,6 +147,7 @@ public class PrenotazioniDettagliateService extends BasicService {
 
     private PrenotazioneDTO mapToPrenotazioneDTO(VPrenotazioniDettagliate v) {
         return PrenotazioneDTO.builder()
+                .id(v.getId())
                 .numeroPrenotazione(v.getNumeroPrenotazione())
                 .dataOra(v.getDataOra())
                 .dataOraFine(v.getDataOraFine())

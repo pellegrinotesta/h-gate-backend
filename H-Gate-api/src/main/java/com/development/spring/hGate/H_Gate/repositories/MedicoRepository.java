@@ -20,5 +20,13 @@ public interface MedicoRepository extends CrudRepository<Medico, Integer> {
     boolean existsByNumeroAlbo(String numeroAlbo);
     Optional<Medico> findByNumeroAlbo(String numeroAlbo);
 
+    @Query("""
+        SELECT m FROM Medico m
+        JOIN FETCH m.user u
+        WHERE m.isVerificato = false
+          AND u.isActive = true
+    """)
+    List<Medico> findMediciDaVerificare();
+
     Optional<Medico> findById(Integer medicoId);
 }

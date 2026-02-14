@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -16,6 +17,9 @@ public class SlotDisponibiliDTO {
     private Integer medicoId;
     private String medicoNome;
     private String data;
+    private LocalTime orarioInizio;
+    private LocalTime orarioFine;
     private List<SlotDisponibileDTO> slots;
     private Integer durataVisitaMinuti;
+    private String message;
 }

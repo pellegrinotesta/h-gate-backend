@@ -15,6 +15,8 @@ import java.time.LocalTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class DisponibilitaMediciDTO {
 
+    private Integer id;
+    private Integer medicoId;
     private Integer giornoSettimana;
     private LocalTime oraInizio;
     private LocalTime oraFine;
@@ -22,4 +24,19 @@ public class DisponibilitaMediciDTO {
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    public String getGiornoNome() {
+        if (giornoSettimana == null) return null;
+
+        return switch (giornoSettimana) {
+            case 0 -> "Lunedì";
+            case 1 -> "Martedì";
+            case 2 -> "Mercoledì";
+            case 3 -> "Giovedì";
+            case 4 -> "Venerdì";
+            case 5 -> "Sabato";
+            case 6 -> "Domenica";
+            default -> "Non valido";
+        };
+    }
+
 }

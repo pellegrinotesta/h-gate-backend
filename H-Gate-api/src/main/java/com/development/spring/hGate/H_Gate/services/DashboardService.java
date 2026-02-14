@@ -50,6 +50,7 @@ public class DashboardService extends BasicService {
         Users user = userRepository.findById(medicoUserId).orElseThrow(() -> buildEntityWithIdNotFoundException(medico.getId(), "Utente non trovato"));
 
         return DashboardMedicoResponse.builder()
+                .medicoId(medico.getId())
                 .nomeMedico(user.getNomeCompleto())
                 .visiteOggi(prenotazioniDettagliateService.visiteOggi(medicoUserId))
                 .pazientiTotali(prenotazioniDettagliateService.pazientiTotali(medicoUserId))

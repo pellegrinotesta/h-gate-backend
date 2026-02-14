@@ -17,6 +17,7 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class DashboardMedicoResponse {
 
+    private Integer medicoId;
     private String nomeMedico;
     private Integer visiteOggi;
     private Integer pazientiTotali;

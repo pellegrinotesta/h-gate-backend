@@ -6,10 +6,7 @@ import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatSpecializzazioneDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliDTO;
-import com.development.spring.hGate.H_Gate.entity.Medico;
-import com.development.spring.hGate.H_Gate.entity.Paziente;
-import com.development.spring.hGate.H_Gate.entity.Prenotazione;
-import com.development.spring.hGate.H_Gate.entity.TutoreLegale;
+import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.development.spring.hGate.H_Gate.repositories.*;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
@@ -27,6 +24,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +39,7 @@ public class PrenotazioneService extends BasicService {
     private final PazienteTutoreRepository pazienteTutoreRepository;
     private final TariffeMediciRepository tariffeMediciRepository;
     private final NotificheService notificheService;
+    private final DisponibilitaMediciService disponibilitaMedicoService;
 
     private static final String PAZIENTE_NOT_FOUND = "Paziente non trovato";
     private static final String MEDICO_NOT_FOUND = "Medico non trovato";
@@ -306,21 +305,39 @@ public class PrenotazioneService extends BasicService {
 
     @Transactional(readOnly = true)
     public SlotDisponibiliDTO getSlotDisponibili(Integer medicoId, String data) {
-
         Medico medico = medicoRepository.findById(medicoId)
                 .orElseThrow(() -> new IllegalArgumentException("Medico non trovato"));
 
         LocalDate date = LocalDate.parse(data);
+
+        // 1. VERIFICA LA DISPONIBILITÀ DEL MEDICO PER QUEL GIORNO
+        Optional<DisponibilitaMedico> disponibilita = disponibilitaMedicoService
+                .getOrariGiorno(medicoId, date);
+
+        if (disponibilita.isEmpty()) {
+            // Medico non disponibile in questo giorno
+            return SlotDisponibiliDTO.builder()
+                    .medicoId(medico.getId())
+                    .medicoNome("Dr. " + medico.getUser().getNome() + " " + medico.getUser().getCognome())
+                    .data(data)
+                    .durataVisitaMinuti(medico.getDurataVisitaMinuti())
+                    .slots(List.of())
+                    .message("Il medico non è disponibile in questo giorno")
+                    .build();
+        }
+
+        DisponibilitaMedico disp = disponibilita.get();
+
+        // 2. USA GLI ORARI CONFIGURATI DAL MEDICO
+        LocalTime inizioLavoro = disp.getOraInizio();
+        LocalTime fineLavoro = disp.getOraFine();
+
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        // Prenotazioni già esistenti per quel giorno
+        // 3. Prenotazioni già esistenti per quel giorno
         List<Prenotazione> prenotazioni = prenotazioneRepository
                 .findByMedicoIdAndDataOraBetween(medicoId, startOfDay, endOfDay);
-
-        // ⬇️ esempio: orario lavorativo fisso (adatta se usi JSON o tabella)
-        LocalTime inizioLavoro = LocalTime.of(9, 0);
-        LocalTime fineLavoro = LocalTime.of(17, 0);
 
         int durata = medico.getDurataVisitaMinuti();
         int pausa = medico.getPausaTraVisiteMinuti();
@@ -330,23 +347,28 @@ public class PrenotazioneService extends BasicService {
         LocalDateTime current = date.atTime(inizioLavoro);
         LocalDateTime fine = date.atTime(fineLavoro);
 
+        // 4. GENERA GLI SLOT NELL'INTERVALLO CONFIGURATO
         while (!current.plusMinutes(durata).isAfter(fine)) {
-
             LocalDateTime slotEnd = current.plusMinutes(durata);
 
             LocalDateTime finalCurrent = current;
+
+            // Verifica se lo slot è già occupato da una prenotazione
             boolean occupato = prenotazioni.stream().anyMatch(p ->
-                    overlaps(finalCurrent, slotEnd, p.getDataOra(),
-                            p.getDataOra().plusMinutes(durata))
+                    overlaps(finalCurrent, slotEnd, p.getDataOra(), p.getDataOraFine())
             );
+
+            // Verifica se lo slot è nel passato
+            boolean passato = current.isBefore(LocalDateTime.now());
 
             slots.add(
                     SlotDisponibileDTO.builder()
                             .dataOra(current)
                             .dataOraFine(slotEnd)
-                            .disponibile(!occupato)
+                            .disponibile(!occupato && !passato)
                             .motivoNonDisponibilita(
-                                    occupato ? "Slot già prenotato" : null
+                                    occupato ? "Slot già prenotato" :
+                                            passato ? "Orario passato" : null
                             )
                             .build()
             );
@@ -360,8 +382,11 @@ public class PrenotazioneService extends BasicService {
                 .data(data)
                 .durataVisitaMinuti(durata)
                 .slots(slots)
+                .orarioInizio(inizioLavoro)
+                .orarioFine(fineLavoro)
                 .build();
     }
+
 
     private boolean overlaps(
             LocalDateTime start1,

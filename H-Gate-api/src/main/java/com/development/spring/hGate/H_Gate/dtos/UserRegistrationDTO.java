@@ -1,9 +1,9 @@
 package com.development.spring.hGate.H_Gate.dtos;
 
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -26,11 +26,7 @@ public class UserRegistrationDTO {
     private String provincia;
     private String cap;
     private String ruolo;
-    private String allergie;
-    private String altezzaCm;
-    private String gruppoSanguigno;
-    private String patologieCroniche;
-    private BigDecimal pesoKg;
+    private PrenotazioneDTO.PazienteMinDTO minore;
     private String annoLaurea;
     private String durataVisitaMinuti;
     private String numeroAlbo;

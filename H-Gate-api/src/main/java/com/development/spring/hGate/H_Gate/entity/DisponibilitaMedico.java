@@ -20,7 +20,7 @@ import java.time.LocalTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "disponibilita_medico")
+@Table(name = "disponibilita_medici")
 public class DisponibilitaMedico extends BasicEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

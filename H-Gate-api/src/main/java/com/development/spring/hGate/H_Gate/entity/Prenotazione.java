@@ -17,6 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +44,13 @@ public class Prenotazione extends BasicEntity {
     @JoinColumn(name = "medico_id", nullable = false)
     private Medico medico;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "created_by_user_id",
+            nullable = false
+    )
+    private Users createdByUserId;
+
     @NotNull
     @Column(name = "data_ora", nullable = false)
     private LocalDateTime dataOra;
@@ -59,7 +67,6 @@ public class Prenotazione extends BasicEntity {
     @Column(nullable = false)
     private StatoPrenotazioneEnum stato = StatoPrenotazioneEnum.IN_ATTESA;
 
-    @NotNull
     @DecimalMin("0.0")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal costo;
@@ -75,6 +82,7 @@ public class Prenotazione extends BasicEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "annullata_da")
+    @JsonIgnore
     private Users annullataDa;
 
     @Column(name = "data_annullamento")
@@ -108,10 +116,6 @@ public class Prenotazione extends BasicEntity {
     @OneToOne(mappedBy = "prenotazione", cascade = CascadeType.ALL)
     @JsonIgnore
     private Recensione recensione;
-
-    @OneToMany(mappedBy = "prenotazione", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<Pagamento> pagamenti = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

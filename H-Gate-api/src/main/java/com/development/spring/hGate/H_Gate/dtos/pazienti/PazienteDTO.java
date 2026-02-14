@@ -1,4 +1,4 @@
-package com.development.spring.hGate.H_Gate.dtos;
+package com.development.spring.hGate.H_Gate.dtos.pazienti;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -17,6 +17,11 @@ import java.util.Date;
 public class PazienteDTO {
 
     private Integer id;
+    private String nome;
+    private String cognome;
+    private String sesso;
+    private Date dataNascita;
+    private String citta;
     private String codiceFiscale;
     private String gruppoSanguigno;
     private Integer altezzaCm;
@@ -27,4 +32,5 @@ public class PazienteDTO {
     private Boolean consensoPrivacy;
     private Boolean consensoMarketing;
     private Date dataConsenso;
+    private String relazione;
 }

@@ -6,6 +6,7 @@ public enum Role implements GrantedAuthority {
 
     PAZIENTE,
     MEDICO,
+    TUTORE,
     ADMIN;
 
 

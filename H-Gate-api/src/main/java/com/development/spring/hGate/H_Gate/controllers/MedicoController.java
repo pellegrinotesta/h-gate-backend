@@ -1,14 +1,18 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
-import com.development.spring.hGate.H_Gate.dtos.MedicoDTO;
+import com.development.spring.hGate.H_Gate.dtos.medici.MedicoDTO;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
+import com.development.spring.hGate.H_Gate.dtos.medici.TariffeMediciDTO;
 import com.development.spring.hGate.H_Gate.entity.Medico;
 import com.development.spring.hGate.H_Gate.mappers.MedicoMapper;
+import com.development.spring.hGate.H_Gate.mappers.TariffeMediciMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.MedicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,6 +21,23 @@ public class MedicoController {
 
     private final MedicoService medicoService;
     private final MedicoMapper medicoMapper;
+    private final TariffeMediciMapper tariffeMediciMapper;
+
+    @GetMapping("/all")
+    public ResponseDTO<List<MedicoDTO>> getAll() {
+        ResponseDTO<List<MedicoDTO>> res = new ResponseDTO<>();
+        try {
+
+            res.setOk(true);
+            res.setData(medicoMapper.convertModelsToDtos(medicoService.getAll()));
+
+        } catch (Exception e) {
+            res.setOk(false);
+            res.setMessage(e.getMessage());
+        }
+
+        return res;
+    }
 
     @GetMapping("/user-id")
     public ResponseDTO<MedicoDTO> findMedicoByUserId(JwtAuthentication jwtAuthentication) {
@@ -45,4 +66,20 @@ public class MedicoController {
 
         return res;
     }
+
+    @GetMapping("/tariffe/{id}")
+    public ResponseDTO<List<TariffeMediciDTO>> listaTariffe(@PathVariable("id") Integer id) {
+        ResponseDTO<List<TariffeMediciDTO>> res = new ResponseDTO<>();
+        try {
+
+            res.setOk(true);
+            res.setData(tariffeMediciMapper.convertModelsToDtos(medicoService.listaTariffeMedico(id)));
+
+        } catch (Exception e) {
+            res.setOk(false);
+            res.setMessage(e.getMessage());
+        }
+
+        return res;
+     }
 }

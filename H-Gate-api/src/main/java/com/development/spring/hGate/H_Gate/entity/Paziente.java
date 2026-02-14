@@ -1,6 +1,5 @@
 package com.development.spring.hGate.H_Gate.entity;
 
-import com.development.spring.hGate.H_Gate.enums.GruppoSanguignoEnum;
 import com.development.spring.hGate.H_Gate.shared.entities.BasicEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -10,6 +9,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -21,9 +21,20 @@ import java.util.List;
 @Table(name = "pazienti")
 public class Paziente extends BasicEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    @Column(name = "nome")
+    private String nome;
+
+    @Column(name = "cognome")
+    private String cognome;
+
+    @Column(name = "sesso")
+    private String sesso;
+
+    @Column(name="data_nascita")
+    private Date dataNascita;
+
+    @Column(name="citta")
+    private String citta;
 
     @Column(name = "codice_fiscale", unique = true, nullable = false, length = 16)
     @Size(min = 16, max = 16)
@@ -67,15 +78,23 @@ public class Paziente extends BasicEntity {
     // Relazioni
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Prenotazione> prenotazioni = new ArrayList<>();
+    private List<Prenotazione> prenotazioni;
 
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Referto> referti = new ArrayList<>();
+    private List<Referto> referti;
 
     @OneToMany(mappedBy = "paziente", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Recensione> recensioni = new ArrayList<>();
+    private List<Recensione> recensioni;
+
+    @OneToMany(
+            mappedBy = "paziente",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<PazienteTutore> tutori;
 
 
 

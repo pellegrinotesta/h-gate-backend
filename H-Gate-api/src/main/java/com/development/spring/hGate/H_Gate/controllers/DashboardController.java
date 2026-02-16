@@ -44,12 +44,10 @@ public class DashboardController {
         try {
             res.setOk(true);
             res.setData(dashboardService.dashboardMedico(jwtAuthentication.getId()));
-
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());
         }
-
         return res;
     }
 
@@ -60,7 +58,6 @@ public class DashboardController {
         try {
             res.setOk(true);
             res.setData(dashboardService.getKpiData());
-
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());
@@ -85,9 +82,7 @@ public class DashboardController {
     @GetMapping("/medici-da-verificare")
 
     public ResponseDTO<List<MedicoDaVerificare>> getMediciDaVerificare() {
-
         ResponseDTO<List<MedicoDaVerificare>> res = new ResponseDTO<>();
-
         try {
             res.setOk(true);
             res.setData(dashboardService.getMediciDaVerificare());

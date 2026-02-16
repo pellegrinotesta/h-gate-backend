@@ -44,8 +44,6 @@ public class PrenotazioneDTO {
     private Date createdAt;
     private Date updatedAt;
     private RefertoDTO referto;
-//    private RecensioneDTO recensione;
-//    private List<PagamentoDTO> pagamenti = new ArrayList<>();
 
     @Data
     @Builder

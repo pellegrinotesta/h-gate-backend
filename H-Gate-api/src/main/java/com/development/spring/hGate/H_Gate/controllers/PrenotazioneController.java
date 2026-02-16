@@ -1,18 +1,23 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneAnnullaDTO;
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.*;
 import com.development.spring.hGate.H_Gate.entity.Prenotazione;
+import com.development.spring.hGate.H_Gate.entity.VPrenotazioniDettagliate;
+import com.development.spring.hGate.H_Gate.libs.data.models.Filter;
+import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import com.development.spring.hGate.H_Gate.mappers.PrenotazioneMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.PrenotazioneService;
+import com.development.spring.hGate.H_Gate.services.PrenotazioniDettagliateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +26,15 @@ public class PrenotazioneController {
 
     private final PrenotazioneService prenotazioneService;
     private final PrenotazioneMapper prenotazioneMapper;
+    private final PrenotazioniDettagliateService prenotazioniDettagliateService;
+
+
+    @PostMapping("/advanced-search")
+    public PageDTO<PrenotazioniDettagliateDTO> advancedSearch(
+            @RequestBody(required = false) Optional<Filter<VPrenotazioniDettagliate>> filter,
+            @PageableDefault Pageable pageable) {
+        return prenotazioniDettagliateService.searchAdvanced(filter, pageable);
+    }
 
     @PostMapping()
     @PreAuthorize("hasAuthority('TUTORE')")

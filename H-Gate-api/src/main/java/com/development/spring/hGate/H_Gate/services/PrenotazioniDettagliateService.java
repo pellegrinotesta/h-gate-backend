@@ -1,21 +1,37 @@
 package com.development.spring.hGate.H_Gate.services;
 
+import com.development.spring.hGate.H_Gate.components.PrenotazioneSpecificationsFactory;
 import com.development.spring.hGate.H_Gate.dtos.medici.MedicoDaVerificareDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioniDettagliateDTO;
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
-import com.development.spring.hGate.H_Gate.repositories.MedicoRepository;
+import com.development.spring.hGate.H_Gate.libs.data.models.Filter;
+import com.development.spring.hGate.H_Gate.libs.utils.ComparableWrapper;
+import com.development.spring.hGate.H_Gate.libs.utils.Pair;
+import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
+import com.development.spring.hGate.H_Gate.mappers.PrenotazioneDettagliateMapper;
 import com.development.spring.hGate.H_Gate.repositories.PrenotazioniDettagliateRepository;
 import com.development.spring.hGate.H_Gate.repositories.RefertoRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +39,50 @@ public class PrenotazioniDettagliateService extends BasicService {
 
     private final PrenotazioniDettagliateRepository prenotazioniDettagliateRepository;
     private final RefertoRepository refertoRepository;
-    private final MedicoRepository medicoRepository;
+    private final PrenotazioneSpecificationsFactory prenotazioneSpecificationsFactory;
+    private final PrenotazioneDettagliateMapper prenotazioneDettagliateMapper;
+
+    private final Map<String, Function<VPrenotazioniDettagliate, ComparableWrapper>> sortingFields = new HashMap<>() {{
+        put("numeroPrenotazione", prenotazioniDettagliate -> prenotazioniDettagliate.getNumeroPrenotazione() != null ? new ComparableWrapper(prenotazioniDettagliate.getNumeroPrenotazione()) : null);
+        put("tipoVisita", prenotazioniDettagliate -> prenotazioniDettagliate.getTipoVisita() != null ? new ComparableWrapper(prenotazioniDettagliate.getTipoVisita()) : null);
+        put("stato", prenotazioniDettagliate -> prenotazioniDettagliate.getStato() != null ? new ComparableWrapper(prenotazioniDettagliate.getStato()): null);
+        put("pazienteNomeCompleto", prenotazioniDettagliate -> prenotazioniDettagliate.getPazienteNomeCompleto() != null ? new ComparableWrapper(prenotazioniDettagliate.getPazienteNomeCompleto()) : null);
+        put("tutoreNomeCompleto", prenotazioniDettagliate -> prenotazioniDettagliate.getTutoreNomeCompleto() != null ? new ComparableWrapper(prenotazioniDettagliate.getTutoreNomeCompleto()) : null);
+        put("medicoNomeCompleto", prenotazioniDettagliate -> prenotazioniDettagliate.getMedicoNomeCompleto() != null ? new ComparableWrapper(prenotazioniDettagliate.getMedicoNomeCompleto()) : null);
+    }};
+
+    @Transactional
+    public PageDTO<PrenotazioniDettagliateDTO> searchAdvanced(Optional<Filter<VPrenotazioniDettagliate>> filter, Pageable pageable) {
+        try {
+
+            Pair<Boolean, String> sortingInfo = isSortedOnNonDirectlyMappedField(sortingFields, pageable);
+            boolean isSorted = sortingInfo.getFirst();
+            String sortingProperty = sortingInfo.getSecond();
+            Page<VPrenotazioniDettagliate> patentsPage;
+
+            if(isSorted) {
+                List<VPrenotazioniDettagliate> frames = filter.map(framesFilter ->
+                        prenotazioniDettagliateRepository.findAll(getSpecificationForAdvancedSearch(framesFilter))
+                ).orElseGet(prenotazioniDettagliateRepository::findAll);
+                patentsPage = getPage(sortingFields, frames, pageable, sortingProperty);
+            }
+            else
+                patentsPage = filter.map(patentFilter ->
+                        prenotazioniDettagliateRepository.findAll(getSpecificationForAdvancedSearch(patentFilter), pageable)
+                ).orElseGet(() -> prenotazioniDettagliateRepository.findAll(pageable));
+
+            return prenotazioneDettagliateMapper.convertModelsPageToDtosPage(patentsPage);
+
+        } catch (PropertyReferenceException ex) {
+            String message = String.format(INVALID_SEARCH_CRITERIA, ex.getMessage());
+            logger.debug(message);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
+    }
+
+    private Specification<VPrenotazioniDettagliate> getSpecificationForAdvancedSearch(Filter<VPrenotazioniDettagliate> framesFilter){
+        return framesFilter.toSpecification(prenotazioneSpecificationsFactory);
+    }
 
     /**
      * Ottiene le prossime 5 prenotazioni per il tutore
@@ -35,8 +94,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 StatoPrenotazioneEnum.IN_ATTESA.name()
         );
 
-        return prenotazioniDettagliateRepository
-                .findTop5ByTutoreUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(
+        return prenotazioniDettagliateRepository.findTop5ByTutoreUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(
                         tutoreUserId,
                         now,
                         stati
@@ -53,8 +111,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 StatoPrenotazioneEnum.IN_ATTESA.name()
         );
 
-        return prenotazioniDettagliateRepository
-                .countByTutoreUserIdAndDataOraAfterAndStatoIn(
+        return prenotazioniDettagliateRepository.countByTutoreUserIdAndDataOraAfterAndStatoIn(
                         tutoreUserId,
                         now,
                         stati
@@ -79,8 +136,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 StatoPrenotazioneEnum.IN_ATTESA.name()
         );
 
-        return prenotazioniDettagliateRepository
-                .countByMedicoUserIdAndDataOraBetweenAndStatoIn(
+        return prenotazioniDettagliateRepository.countByMedicoUserIdAndDataOraBetweenAndStatoIn(
                         medicoUserId,
                         startOfDay,
                         endOfDay,
@@ -92,8 +148,7 @@ public class PrenotazioniDettagliateService extends BasicService {
      * Conta i pazienti totali del medico
      */
     public Integer pazientiTotali(Integer medicoUserId) {
-        return prenotazioniDettagliateRepository
-                .countDistinctPazientiByMedico(medicoUserId);
+        return prenotazioniDettagliateRepository.countDistinctPazientiByMedico(medicoUserId);
     }
 
     /**
@@ -107,8 +162,7 @@ public class PrenotazioniDettagliateService extends BasicService {
      * Conta i referti da completare (visite completate senza referto)
      */
     public Integer refertiDaCompletare(Integer medicoUserId) {
-        return prenotazioniDettagliateRepository
-                .countByMedicoUserIdAndStato(
+        return prenotazioniDettagliateRepository.countByMedicoUserIdAndStato(
                         medicoUserId,
                         StatoPrenotazioneEnum.COMPLETATA.name()
                 );
@@ -123,8 +177,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 StatoPrenotazioneEnum.IN_ATTESA.name()
         );
 
-        List<VPrenotazioniDettagliate> prenotazioni = prenotazioniDettagliateRepository
-                .findByMedicoUserIdAndStatoIn(
+        List<VPrenotazioniDettagliate> prenotazioni = prenotazioniDettagliateRepository.findByMedicoUserIdAndStatoIn(
                         medicoUserId,
                         stati
                 );
@@ -132,17 +185,6 @@ public class PrenotazioniDettagliateService extends BasicService {
         return prenotazioni.stream()
                 .map(this::mapToPrenotazioneDTO)
                 .toList();
-    }
-
-    /**
-     * Ottiene i medici in attesa di verifica
-     */
-    public List<MedicoDaVerificareDTO> mediciInAttesa() {
-        return medicoRepository
-                .findByIsVerificatoFalse()
-                .stream()
-                .map(this::mapToMedicoDaVerificareDTO)
-                .collect(Collectors.toList());
     }
 
     private PrenotazioneDTO mapToPrenotazioneDTO(VPrenotazioniDettagliate v) {

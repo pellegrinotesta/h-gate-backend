@@ -51,27 +51,37 @@ public class PrenotazioniDettagliateService extends BasicService {
         put("medicoNomeCompleto", prenotazioniDettagliate -> prenotazioniDettagliate.getMedicoNomeCompleto() != null ? new ComparableWrapper(prenotazioniDettagliate.getMedicoNomeCompleto()) : null);
     }};
 
-    @Transactional
-    public PageDTO<PrenotazioniDettagliateDTO> searchAdvanced(Optional<Filter<VPrenotazioniDettagliate>> filter, Pageable pageable) {
+    /**
+     * Ricerca avanzata - USA IL TUO SISTEMA FILTER ESISTENTE
+     */
+    @Transactional(readOnly = true)
+    public PageDTO<PrenotazioniDettagliateDTO> searchAdvanced(
+            Optional<Filter<VPrenotazioniDettagliate>> filter,
+            Pageable pageable, Integer userId) {
         try {
+            Specification<VPrenotazioniDettagliate> tutoreSpec = ((root, query, cb) -> cb.equal(root.get("tutoreUserId"), userId));
+
+            Specification<VPrenotazioniDettagliate> finalSpec = filter.map(f -> getSpecificationForAdvancedSearch(f).and(tutoreSpec)).orElse(tutoreSpec);
 
             Pair<Boolean, String> sortingInfo = isSortedOnNonDirectlyMappedField(sortingFields, pageable);
             boolean isSorted = sortingInfo.getFirst();
             String sortingProperty = sortingInfo.getSecond();
-            Page<VPrenotazioniDettagliate> patentsPage;
+            Page<VPrenotazioniDettagliate> page;
 
             if(isSorted) {
-                List<VPrenotazioniDettagliate> frames = filter.map(framesFilter ->
-                        prenotazioniDettagliateRepository.findAll(getSpecificationForAdvancedSearch(framesFilter))
-                ).orElseGet(prenotazioniDettagliateRepository::findAll);
-                patentsPage = getPage(sortingFields, frames, pageable, sortingProperty);
-            }
-            else
-                patentsPage = filter.map(patentFilter ->
-                        prenotazioniDettagliateRepository.findAll(getSpecificationForAdvancedSearch(patentFilter), pageable)
-                ).orElseGet(() -> prenotazioniDettagliateRepository.findAll(pageable));
+                List<VPrenotazioniDettagliate> frames = filter
+                        .map(uf -> prenotazioniDettagliateRepository.findAll(
+                                getSpecificationForAdvancedSearch(uf).and(tutoreSpec)))  // ← AND qui
+                        .orElseGet(() -> prenotazioniDettagliateRepository.findAll(tutoreSpec));
 
-            return prenotazioneDettagliateMapper.convertModelsPageToDtosPage(patentsPage);
+                page = getPage(sortingFields, frames, pageable, sortingProperty);
+            } else {
+                page = filter.map(uf -> prenotazioniDettagliateRepository.findAll(
+                        getSpecificationForAdvancedSearch(uf).and(tutoreSpec), pageable))
+                        .orElseGet(() -> prenotazioniDettagliateRepository.findAll(tutoreSpec, pageable));
+            }
+
+            return prenotazioneDettagliateMapper.convertModelsPageToDtosPage(page);
 
         } catch (PropertyReferenceException ex) {
             String message = String.format(INVALID_SEARCH_CRITERIA, ex.getMessage());
@@ -80,13 +90,15 @@ public class PrenotazioniDettagliateService extends BasicService {
         }
     }
 
-    private Specification<VPrenotazioniDettagliate> getSpecificationForAdvancedSearch(Filter<VPrenotazioniDettagliate> framesFilter){
-        return framesFilter.toSpecification(prenotazioneSpecificationsFactory);
+    private Specification<VPrenotazioniDettagliate> getSpecificationForAdvancedSearch(
+            Filter<VPrenotazioniDettagliate> filter) {
+        return filter.toSpecification(prenotazioneSpecificationsFactory);
     }
 
     /**
      * Ottiene le prossime 5 prenotazioni per il tutore
      */
+    @Transactional(readOnly = true)
     public List<VPrenotazioniDettagliate> prenotazioniTutore(Integer tutoreUserId) {
         LocalDateTime now = LocalDateTime.now();
         List<String> stati = List.of(
@@ -95,15 +107,13 @@ public class PrenotazioniDettagliateService extends BasicService {
         );
 
         return prenotazioniDettagliateRepository.findTop5ByTutoreUserIdAndDataOraAfterAndStatoInOrderByDataOraAsc(
-                        tutoreUserId,
-                        now,
-                        stati
-                );
+                tutoreUserId, now, stati);
     }
 
     /**
      * Conta i prossimi appuntamenti del tutore
      */
+    @Transactional(readOnly = true)
     public Integer prossimiAppuntamentiTutore(Integer tutoreUserId) {
         LocalDateTime now = LocalDateTime.now();
         List<String> stati = List.of(
@@ -112,15 +122,13 @@ public class PrenotazioniDettagliateService extends BasicService {
         );
 
         return prenotazioniDettagliateRepository.countByTutoreUserIdAndDataOraAfterAndStatoIn(
-                        tutoreUserId,
-                        now,
-                        stati
-                );
+                tutoreUserId, now, stati);
     }
 
     /**
      * Conta tutte le visite del tutore
      */
+    @Transactional(readOnly = true)
     public Integer visiteTotaliTutore(Integer tutoreUserId) {
         return prenotazioniDettagliateRepository.countByTutoreUserId(tutoreUserId);
     }
@@ -128,6 +136,7 @@ public class PrenotazioniDettagliateService extends BasicService {
     /**
      * Conta le visite di oggi del medico
      */
+    @Transactional(readOnly = true)
     public Integer visiteOggi(Integer medicoUserId) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
@@ -137,16 +146,13 @@ public class PrenotazioniDettagliateService extends BasicService {
         );
 
         return prenotazioniDettagliateRepository.countByMedicoUserIdAndDataOraBetweenAndStatoIn(
-                        medicoUserId,
-                        startOfDay,
-                        endOfDay,
-                        stati
-                );
+                medicoUserId, startOfDay, endOfDay, stati);
     }
 
     /**
      * Conta i pazienti totali del medico
      */
+    @Transactional(readOnly = true)
     public Integer pazientiTotali(Integer medicoUserId) {
         return prenotazioniDettagliateRepository.countDistinctPazientiByMedico(medicoUserId);
     }
@@ -154,6 +160,7 @@ public class PrenotazioniDettagliateService extends BasicService {
     /**
      * Conta i referti da firmare del medico
      */
+    @Transactional(readOnly = true)
     public Integer refertiDaFirmare(Integer medicoUserId) {
         return refertoRepository.countByMedicoUserIdAndIsFirmatoFalse(medicoUserId);
     }
@@ -161,16 +168,16 @@ public class PrenotazioniDettagliateService extends BasicService {
     /**
      * Conta i referti da completare (visite completate senza referto)
      */
+    @Transactional(readOnly = true)
     public Integer refertiDaCompletare(Integer medicoUserId) {
         return prenotazioniDettagliateRepository.countByMedicoUserIdAndStato(
-                        medicoUserId,
-                        StatoPrenotazioneEnum.COMPLETATA.name()
-                );
+                medicoUserId, StatoPrenotazioneEnum.COMPLETATA.name());
     }
 
     /**
      * Ottiene gli appuntamenti di oggi del medico
      */
+    @Transactional(readOnly = true)
     public List<PrenotazioneDTO> appuntamentiOggi(Integer medicoUserId) {
         List<String> stati = List.of(
                 StatoPrenotazioneEnum.CONFERMATA.name(),
@@ -178,9 +185,7 @@ public class PrenotazioniDettagliateService extends BasicService {
         );
 
         List<VPrenotazioniDettagliate> prenotazioni = prenotazioniDettagliateRepository.findByMedicoUserIdAndStatoIn(
-                        medicoUserId,
-                        stati
-                );
+                medicoUserId, stati);
 
         return prenotazioni.stream()
                 .map(this::mapToPrenotazioneDTO)
@@ -200,22 +205,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                         .nome(v.getPazienteNome())
                         .cognome(v.getPazienteCognome())
                         .codiceFiscale(v.getPazienteCf())
-                        //.email(v.getTutoreEmail()) // Email del tutore
                         .build())
-                .build();
-    }
-
-    private MedicoDaVerificareDTO mapToMedicoDaVerificareDTO(Medico medico) {
-        return MedicoDaVerificareDTO.builder()
-                .id(medico.getId())
-                .nome(medico.getUser().getNome())
-                .cognome(medico.getUser().getCognome())
-                .email(medico.getUser().getEmail())
-                .specializzazione(medico.getSpecializzazione())
-                .numeroAlbo(medico.getNumeroAlbo())
-                .universita(medico.getUniversita())
-                .annoLaurea(medico.getAnnoLaurea())
-                .hasDocuments(true)
                 .build();
     }
 }

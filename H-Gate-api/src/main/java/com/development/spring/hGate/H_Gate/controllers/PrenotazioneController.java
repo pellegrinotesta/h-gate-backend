@@ -1,5 +1,7 @@
 package com.development.spring.hGate.H_Gate.controllers;
 
+import com.development.spring.hGate.H_Gate.dtos.PaginatedResponseDTO;
+import com.development.spring.hGate.H_Gate.dtos.PaginatedResponseData;
 import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.*;
 import com.development.spring.hGate.H_Gate.entity.Prenotazione;
@@ -17,6 +19,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -30,10 +33,15 @@ public class PrenotazioneController {
 
 
     @PostMapping("/advanced-search")
-    public PageDTO<PrenotazioniDettagliateDTO> advancedSearch(
+    @PreAuthorize("hasAuthority('TUTORE')")
+    public PaginatedResponseDTO<PrenotazioniDettagliateDTO> advancedSearch(
             @RequestBody(required = false) Optional<Filter<VPrenotazioniDettagliate>> filter,
-            @PageableDefault Pageable pageable) {
-        return prenotazioniDettagliateService.searchAdvanced(filter, pageable);
+            @PageableDefault Pageable pageable, JwtAuthentication jwtAuthentication) {
+        PageDTO<PrenotazioniDettagliateDTO> pageDTO = prenotazioniDettagliateService.searchAdvanced(filter, pageable, jwtAuthentication.getId());
+        PaginatedResponseData<PrenotazioniDettagliateDTO> data =
+                PaginatedResponseData.fromPageDTO(pageDTO);
+
+        return PaginatedResponseDTO.success(data);
     }
 
     @PostMapping()

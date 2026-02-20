@@ -1,6 +1,7 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneUpdateDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibileDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
@@ -9,6 +10,7 @@ import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliD
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.development.spring.hGate.H_Gate.repositories.*;
+import com.development.spring.hGate.H_Gate.shared.models.Role;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -47,6 +49,10 @@ public class PrenotazioneService extends BasicService {
     private static final String SLOT_NOT_AVAILABLE = "Orario non disponibile";
     private static final String PRENOTAZIONE_NOT_FOUND = "Prenotazione non trovata";
 
+
+    public Prenotazione getById(Integer id) {
+        return prenotazioneRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
+    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Prenotazione creaPrenotazione(Integer tutoreUserId, PrenotazioneCreateDTO dto) {
@@ -128,11 +134,9 @@ public class PrenotazioneService extends BasicService {
     }
 
     private String generaNumeroPrenotazione() {
-        LocalDate today = LocalDate.now();
-        String data = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        long progressivo = prenotazioneRepository.countByData(today) + 1;
-        String progressivoFormatted = String.format("%03d", progressivo);
-        return "NPI" + data + progressivoFormatted;
+        LocalDateTime now = LocalDateTime.now();
+        String data = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        return "NPI" + data;
     }
 
     @Transactional
@@ -328,6 +332,24 @@ public class PrenotazioneService extends BasicService {
             LocalDateTime end2
     ) {
         return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+
+    @Transactional
+    public Prenotazione update(PrenotazioneUpdateDTO req) {
+        Prenotazione prenotazione = prenotazioneRepository.findById(req.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
+
+        if(req.getNoteMedico() != null) {
+            prenotazione.setNoteMedico(req.getNoteMedico());
+        }
+
+        if(req.getDiagnosi() != null) {
+            if(prenotazione.getReferto() != null) {
+                prenotazione.getReferto().setDiagnosi(req.getDiagnosi());
+            }
+        }
+
+        return prenotazioneRepository.save(prenotazione);
+
     }
 
 

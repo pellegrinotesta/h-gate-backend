@@ -15,6 +15,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class PrenotazioniDettagliateDTO {
 
+    private Integer id;
     private String uuid;
     private String numeroPrenotazione;
     private Date dataOra;

@@ -112,4 +112,38 @@ public class PrenotazioneController {
         return res;
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    public ResponseDTO<PrenotazioneDTO> getById(@PathVariable("id") Integer id) {
+        ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
+
+        try {
+            res.setOk(true);
+            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.getById(id)));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('MEDICO')")
+    public ResponseDTO<PrenotazioneDTO> update(@RequestBody PrenotazioneUpdateDTO request) {
+        ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
+
+        try {
+            res.setOk(true);
+            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.update(request)));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
 }

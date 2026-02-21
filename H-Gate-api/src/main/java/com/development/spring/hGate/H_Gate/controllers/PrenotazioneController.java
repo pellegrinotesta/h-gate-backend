@@ -112,6 +112,22 @@ public class PrenotazioneController {
         return res;
     }
 
+
+    @PutMapping("/{prenotazioneId}/completa")
+    @PreAuthorize("hasAuthority('MEDICO')")
+    public ResponseDTO<PrenotazioneDTO> completaPrenotazione(JwtAuthentication jwtAuthentication, @PathVariable("prenotazioneId") Integer prenotazioneId) {
+        ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.completaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
+
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+        return res;
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
     public ResponseDTO<PrenotazioneDTO> getById(@PathVariable("id") Integer id) {

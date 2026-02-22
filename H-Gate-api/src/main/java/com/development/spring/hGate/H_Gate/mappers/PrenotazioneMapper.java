@@ -12,15 +12,19 @@ import java.util.List;
         builder = @Builder(disableBuilder = true))
 public interface PrenotazioneMapper {
 
+    @Mapping(target = "referto.parametriVitali", ignore = true)
     PrenotazioneDTO convertModelToDTO(Prenotazione prenotazione);
 
+    @Mapping(target = "referto.parametriVitali", ignore = true)
     Prenotazione convertDtoToModel(PrenotazioneDTO prenotazioneDTO);
 
+    @Mapping(target = "referto.parametriVitali", ignore = true)
     List<PrenotazioneDTO> convertModelsToDtos(List<Prenotazione> prenotaziones);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateModel(Prenotazione source, @MappingTarget Prenotazione target);
 
+    @Mapping(target = "referto.parametriVitali", ignore = true)
     default PageDTO<PrenotazioneDTO> convertModelsPageToDtosPage(Page<Prenotazione> modelsPage) {
         return PageDTO.<PrenotazioneDTO>builder()
                 .content(convertModelsToDtos(modelsPage.getContent()))

@@ -108,12 +108,52 @@ public class PrenotazioneScheduledService {
     }
 
     /**
-     * GESTIONE NO-SHOW
-     * Marca come NO_SHOW le prenotazioni confermate
-     * dove il paziente non si è presentato
+     * CANCELLAZIONE PRENOTAZIONI NON CONFERMATE
+     * Se IN_ATTESA e manca meno di 24h → ANNULLA
      * Eseguito ogni ora
      */
-    @Scheduled(cron = "0 15 * * * *") // Ogni ora ai 15 minuti
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void cancellaPrenotazioniNonConfermate() {
+        log.info("=== INIZIO CANCELLAZIONE NON CONFERMATE ===");
+
+        LocalDateTime tra24Ore = LocalDateTime.now().plusHours(24);
+
+        // Prenotazioni IN_ATTESA che iniziano tra meno di 24h
+        List<Prenotazione> prenotazioniDaCancellare = prenotazioneRepository
+                .findByStatoAndDataOraBefore(
+                        StatoPrenotazioneEnum.IN_ATTESA,
+                        tra24Ore
+                );
+
+        log.info("Trovate {} prenotazioni non confermate da cancellare",
+                prenotazioniDaCancellare.size());
+
+        int cancellate = 0;
+        for (Prenotazione p : prenotazioniDaCancellare) {
+            try {
+                p.setStato(StatoPrenotazioneEnum.ANNULLATA);
+                p.setMotivoAnnullamento(
+                        "Cancellazione automatica: medico non ha confermato entro 24h dalla visita"
+                );
+                p.setDataAnnullamento(LocalDateTime.now());
+                prenotazioneRepository.save(p);
+
+                // INVALIDA notifiche vecchie
+                //notificaService.invalidaNotifichePrenotazione(p.getId());
+
+                // NUOVA notifica di cancellazione
+                notificaService.notificaCancellazioneAutomaticaTutore(p);
+
+                cancellate++;
+            } catch (Exception e) {
+                log.error("Errore cancellazione prenotazione {}", p.getId(), e);
+            }
+        }
+
+        log.info("=== CANCELLATE {}/{} ===", cancellate, prenotazioniDaCancellare.size());
+    }
+
     @Transactional
     public void gestisciNoShow() {
         log.info("=== INIZIO GESTIONE NO-SHOW ===");
@@ -148,4 +188,43 @@ public class PrenotazioneScheduledService {
 
         log.info("=== COMPLETATA GESTIONE NO-SHOW: {}/{} ===", marcate, prenotazioniPassate.size());
     }
+
+    /**
+     * PROMEMORIA AL MEDICO
+     * Se IN_ATTESA da più di 24h → sollecita conferma
+     */
+    @Scheduled(cron = "0 0 10 * * *") // Ogni giorno alle 10:00
+    @Transactional
+    public void sollecitaConfermaMedico() {
+        log.info("=== SOLLECITO CONFERMA MEDICI ===");
+
+        LocalDateTime limite = LocalDateTime.now().minusHours(24);
+
+        List<Prenotazione> prenotazioniDaSollecitare = prenotazioneRepository
+                .findByStatoAndCreatedAtBeforeAndConfermaInviataFalse(
+                        StatoPrenotazioneEnum.IN_ATTESA,
+                        limite
+                );
+
+        log.info("Trovate {} prenotazioni da sollecitare",
+                prenotazioniDaSollecitare.size());
+
+        int sollecitate = 0;
+        for (Prenotazione p : prenotazioniDaSollecitare) {
+            try {
+                notificaService.sollecitaConfermaMedico(p);
+
+                p.setConfermaInviata(true);
+                prenotazioneRepository.save(p);
+
+                sollecitate++;
+            } catch (Exception e) {
+                log.error("Errore sollecito {}", p.getId(), e);
+            }
+        }
+
+        log.info("=== SOLLECITATE {}/{} ===", sollecitate, prenotazioniDaSollecitare.size());
+    }
+
+
 }

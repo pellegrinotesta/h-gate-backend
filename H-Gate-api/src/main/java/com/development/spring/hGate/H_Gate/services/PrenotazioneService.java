@@ -1,6 +1,7 @@
 package com.development.spring.hGate.H_Gate.services;
 
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneCreateDTO;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneUpdateDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibileDTO;
 import com.development.spring.hGate.H_Gate.dtos.prenotazioni.SlotDisponibiliDTO;
 import com.development.spring.hGate.H_Gate.dtos.statistiche.StatGiornoDTO;
@@ -9,6 +10,7 @@ import com.development.spring.hGate.H_Gate.dtos.statistiche.StatisticheGeneraliD
 import com.development.spring.hGate.H_Gate.entity.*;
 import com.development.spring.hGate.H_Gate.enums.StatoPrenotazioneEnum;
 import com.development.spring.hGate.H_Gate.repositories.*;
+import com.development.spring.hGate.H_Gate.shared.models.Role;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -47,6 +49,10 @@ public class PrenotazioneService extends BasicService {
     private static final String SLOT_NOT_AVAILABLE = "Orario non disponibile";
     private static final String PRENOTAZIONE_NOT_FOUND = "Prenotazione non trovata";
 
+
+    public Prenotazione getById(Integer id) {
+        return prenotazioneRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
+    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Prenotazione creaPrenotazione(Integer tutoreUserId, PrenotazioneCreateDTO dto) {
@@ -93,9 +99,7 @@ public class PrenotazioneService extends BasicService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Hai già una prenotazione per questo paziente in questo giorno");
         }
 
-        BigDecimal costo = tariffeMediciRepository
-                .findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita())
-                .orElseThrow(() -> new ResponseStatusException(
+        BigDecimal costo = tariffeMediciRepository.findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita()).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Tariffa non configurata"
                 ));
@@ -130,19 +134,16 @@ public class PrenotazioneService extends BasicService {
     }
 
     private String generaNumeroPrenotazione() {
-        LocalDate today = LocalDate.now();
-        String data = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        long progressivo = prenotazioneRepository.countByData(today) + 1;
-        String progressivoFormatted = String.format("%03d", progressivo);
-        return "NPI" + data + progressivoFormatted;
+        LocalDateTime now = LocalDateTime.now();
+        String data = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        return "NPI" + data;
     }
 
     @Transactional
     public Prenotazione confermaPrenotazione(Integer medicoUserId, Integer prenotazioneId) {
         logger.info("Medico userId: {} conferma prenotazione ID: {}", medicoUserId, prenotazioneId);
 
-        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
-                .orElseThrow(() -> new ResponseStatusException(
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         PRENOTAZIONE_NOT_FOUND
                 ));
@@ -179,35 +180,59 @@ public class PrenotazioneService extends BasicService {
         return prenotazione;
     }
 
+    @Transactional
+    public Prenotazione completaPrenotazione(Integer medicoUserId, Integer prenotazioneId) {
+
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                PRENOTAZIONE_NOT_FOUND
+        ));
+
+        Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
+
+        if (!prenotazione.getMedico().getId().equals(medico.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Non sei autorizzato a completare questa prenotazione"
+            );
+        }
+
+        if (prenotazione.getStato() != StatoPrenotazioneEnum.CONFERMATA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Questa prenotazione non è in attesa di completamentp"
+            );
+        }
+
+        prenotazione.setStato(StatoPrenotazioneEnum.COMPLETATA);
+        prenotazione.setConfermaInviata(true);
+
+        prenotazione = prenotazioneRepository.save(prenotazione);
+
+        return prenotazione;
+    }
+
 
     @Transactional
     public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {
 
         // Verifica che la prenotazione esista
-        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
-                .orElseThrow(() -> new ResponseStatusException(
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Prenotazione non trovata"
                 ));
 
         // Verifica che il tutore sia autorizzato
-        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId)
-                .orElseThrow(() -> new ResponseStatusException(
+        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
                         "Tutore non trovato"
                 ));
 
-        boolean isAuthorized = pazienteTutoreRepository
-                .existsByPazienteIdAndTutoreId(
-                        prenotazione.getPaziente().getId(),
-                        tutore.getId()
+        boolean isAuthorized = pazienteTutoreRepository.existsByPazienteIdAndTutoreId(prenotazione.getPaziente().getId(), tutore.getId()
                 );
 
         if (!isAuthorized) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Non sei autorizzato ad annullare questa prenotazione"
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non sei autorizzato ad annullare questa prenotazione");
         }
 
         // Verifica che la prenotazione non sia già completata o annullata
@@ -248,71 +273,17 @@ public class PrenotazioneService extends BasicService {
 
     private boolean verificaDisponibilitaSlot(Integer medicoId, LocalDateTime dataOra, LocalDateTime dataOraFine) {
         List<Prenotazione> conflitti = prenotazioneRepository.findConflittingAppointments(medicoId, dataOra, dataOraFine, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
-
         return conflitti.isEmpty();
-    }
-
-    public StatisticheGeneraliDTO getStatisticheGenerali() {
-        // Prenotazioni per giorno della settimana (ultimi 7 giorni)
-        List<StatGiornoDTO> prenotazioniPerGiorno = List.of(
-                StatGiornoDTO.builder().giorno("Lunedì").valore(
-                        prenotazioneRepository.countByDayOfWeek(1)
-                ).build(),
-                StatGiornoDTO.builder().giorno("Martedì").valore(
-                        prenotazioneRepository.countByDayOfWeek(2)
-                ).build(),
-                StatGiornoDTO.builder().giorno("Mercoledì").valore(
-                        prenotazioneRepository.countByDayOfWeek(3)
-                ).build(),
-                StatGiornoDTO.builder().giorno("Giovedì").valore(
-                        prenotazioneRepository.countByDayOfWeek(4)
-                ).build(),
-                StatGiornoDTO.builder().giorno("Venerdì").valore(
-                        prenotazioneRepository.countByDayOfWeek(5)
-                ).build()
-        );
-
-        // Top 5 specializzazioni più richieste
-        List<StatSpecializzazioneDTO> specializzazioniTop = medicoRepository
-                .findTopSpecializzazioni()
-                .stream()
-                .limit(5)
-                .map(row -> StatSpecializzazioneDTO.builder()
-                        .specializzazione((String) row[0])
-                        .valore(((Number) row[1]).intValue())
-                        .build()
-                )
-                .collect(Collectors.toList());
-
-        return StatisticheGeneraliDTO.builder()
-                .prenotazioniPerGiorno(prenotazioniPerGiorno)
-                .specializzazioniTop(specializzazioniTop)
-                .build();
-    }
-
-    public Integer prenotazioniOggi() {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        return prenotazioneRepository.countByDataOraBetween(startOfDay, endOfDay);
-    }
-
-    public BigDecimal fatturatoMensile() {
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfMonth = LocalDate.now().withDayOfMonth(
-                LocalDate.now().lengthOfMonth()).atTime(LocalTime.MAX);
-        return prenotazioneRepository.sumCostoByStatoAndDataOraBetween(StatoPrenotazioneEnum.COMPLETATA, startOfMonth, endOfMonth);
     }
 
     @Transactional(readOnly = true)
     public SlotDisponibiliDTO getSlotDisponibili(Integer medicoId, String data) {
-        Medico medico = medicoRepository.findById(medicoId)
-                .orElseThrow(() -> new IllegalArgumentException("Medico non trovato"));
+        Medico medico = medicoRepository.findById(medicoId).orElseThrow(() -> new IllegalArgumentException("Medico non trovato"));
 
         LocalDate date = LocalDate.parse(data);
 
         // 1. VERIFICA LA DISPONIBILITÀ DEL MEDICO PER QUEL GIORNO
-        Optional<DisponibilitaMedico> disponibilita = disponibilitaMedicoService
-                .getOrariGiorno(medicoId, date);
+        Optional<DisponibilitaMedico> disponibilita = disponibilitaMedicoService.getOrariGiorno(medicoId, date);
 
         if (disponibilita.isEmpty()) {
             // Medico non disponibile in questo giorno
@@ -336,8 +307,7 @@ public class PrenotazioneService extends BasicService {
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
         // 3. Prenotazioni già esistenti per quel giorno
-        List<Prenotazione> prenotazioni = prenotazioneRepository
-                .findByMedicoIdAndDataOraBetween(medicoId, startOfDay, endOfDay);
+        List<Prenotazione> prenotazioni = prenotazioneRepository.findByMedicoIdAndDataOraBetween(medicoId, startOfDay, endOfDay);
 
         int durata = medico.getDurataVisitaMinuti();
         int pausa = medico.getPausaTraVisiteMinuti();
@@ -387,7 +357,6 @@ public class PrenotazioneService extends BasicService {
                 .build();
     }
 
-
     private boolean overlaps(
             LocalDateTime start1,
             LocalDateTime end1,
@@ -395,6 +364,18 @@ public class PrenotazioneService extends BasicService {
             LocalDateTime end2
     ) {
         return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+
+    @Transactional
+    public Prenotazione update(PrenotazioneUpdateDTO req) {
+        Prenotazione prenotazione = prenotazioneRepository.findById(req.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
+
+        if(req.getNoteMedico() != null) {
+            prenotazione.setNoteMedico(req.getNoteMedico());
+        }
+
+        return prenotazioneRepository.save(prenotazione);
+
     }
 
 

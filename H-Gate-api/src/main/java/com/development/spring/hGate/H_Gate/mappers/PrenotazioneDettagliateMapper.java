@@ -1,7 +1,7 @@
 package com.development.spring.hGate.H_Gate.mappers;
 
-import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioneDTO;
-import com.development.spring.hGate.H_Gate.entity.Prenotazione;
+import com.development.spring.hGate.H_Gate.dtos.prenotazioni.PrenotazioniDettagliateDTO;
+import com.development.spring.hGate.H_Gate.entity.VPrenotazioniDettagliate;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
@@ -10,23 +10,19 @@ import java.util.List;
 
 @Mapper(componentModel = "spring",
         builder = @Builder(disableBuilder = true))
-public interface PrenotazioneMapper {
+public interface PrenotazioneDettagliateMapper {
 
-    @Mapping(target = "referto.parametriVitali", ignore = true)
-    PrenotazioneDTO convertModelToDTO(Prenotazione prenotazione);
+    PrenotazioniDettagliateDTO convertModelToDTO(VPrenotazioniDettagliate prenotazioniDettagliate);
 
-    @Mapping(target = "referto.parametriVitali", ignore = true)
-    Prenotazione convertDtoToModel(PrenotazioneDTO prenotazioneDTO);
+    VPrenotazioniDettagliate convertDtoToModel(PrenotazioniDettagliateDTO prenotazioniDettagliateDTO);
 
-    @Mapping(target = "referto.parametriVitali", ignore = true)
-    List<PrenotazioneDTO> convertModelsToDtos(List<Prenotazione> prenotaziones);
+    List<PrenotazioniDettagliateDTO> convertModelsToDtos(List<VPrenotazioniDettagliate> prenotazioniDettagliates);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateModel(Prenotazione source, @MappingTarget Prenotazione target);
+    void updateModel(VPrenotazioniDettagliate source, @MappingTarget VPrenotazioniDettagliate target);
 
-    @Mapping(target = "referto.parametriVitali", ignore = true)
-    default PageDTO<PrenotazioneDTO> convertModelsPageToDtosPage(Page<Prenotazione> modelsPage) {
-        return PageDTO.<PrenotazioneDTO>builder()
+    default PageDTO<PrenotazioniDettagliateDTO> convertModelsPageToDtosPage(Page<VPrenotazioniDettagliate> modelsPage) {
+        return PageDTO.<PrenotazioniDettagliateDTO>builder()
                 .content(convertModelsToDtos(modelsPage.getContent()))
                 .first(modelsPage.isFirst())
                 .last(modelsPage.isLast())

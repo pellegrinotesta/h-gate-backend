@@ -20,13 +20,18 @@ public class PrenotazioneUpdateDTO {
     @NotNull(message = "L'ID è obbligatorio")
     private Integer id;
 
-    @Future(message = "La data deve essere nel futuro")
-    private LocalDateTime dataOra;
+    // Campi modificabili dal TUTORE
+    @Size(max = 1000, message = "La recensione non può superare 1000 caratteri")
+    private String recensione;
 
-    @Size(max = 100, message = "Il tipo di visita non può superare 100 caratteri")
-    private String tipoVisita;
+    @Size(max = 500, message = "Le note paziente non possono superare 500 caratteri")
+    private String notePaziente;
 
-    @Size(max = 500, message = "Le note non possono superare 500 caratteri")
-    private String note;
+    // Campi modificabili dal MEDICO
+    @Size(max = 500, message = "Le note medico non possono superare 500 caratteri")
+    private String noteMedico;
+
+    @Size(max = 2000, message = "La diagnosi non può superare 2000 caratteri")
+    private String diagnosi;
 
 }

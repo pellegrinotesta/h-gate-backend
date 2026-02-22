@@ -121,6 +121,129 @@ public class NotificheService extends BasicService {
     }
 
     /**
+     * Invalida le notifiche obsolete quando cambia lo stato della prenotazione
+     */
+//    @Transactional
+//    public void invalidaNotifichePrenotazione(Integer prenotazioneId) {
+//        List<Notifica> notifiche = notificaRepository.findByPrenotazioneIdAndIsLettaFalse(prenotazioneId);
+//
+//        notifiche.forEach(n -> {
+//            n.setIsLetta(true);
+//            n.setDataLettura(LocalDateTime.now());
+//        });
+//
+//        notificaRepository.saveAll(notifiche);
+//    }
+
+    /**
+     * Notifica al tutore: cancellazione automatica per mancata conferma
+     */
+    @Transactional(readOnly = true)
+    public void notificaCancellazioneAutomaticaTutore(Prenotazione prenotazione) {
+        Users pazienteUser = getTutoreUser(prenotazione);
+
+        String medicoNome = prenotazione.getMedico().getUser().getNome();
+        String medicoCognome = prenotazione.getMedico().getUser().getCognome();
+
+        String titolo = "Prenotazione cancellata automaticamente";
+
+        String messaggio = String.format(
+                "La tua prenotazione è stata cancellata automaticamente.\n\n" +
+                        "Medico: Dr. %s %s\n" +
+                        "Data e ora: %s\n" +
+                        "Motivo: Il medico non ha confermato entro 24 ore dalla visita\n\n" +
+                        "Puoi effettuare una nuova prenotazione con un altro medico.",
+                medicoNome,
+                medicoCognome,
+                prenotazione.getDataOra().format(DATE_FORMATTER)
+        );
+
+        String link = "/tutore/medici";
+
+        creaNotifica(
+                pazienteUser,
+                TipoNotificaEnum.ANNULLAMENTO_PRENOTAZIONE,
+                titolo,
+                messaggio,
+                link,
+                true
+        );
+    }
+
+    /**
+     * Notifica al medico: paziente non presentato
+     */
+    @Transactional(readOnly = true)
+    public void notificaNoShowMedico(Prenotazione prenotazione) {
+        Users medicoUser = prenotazione.getMedico().getUser();
+
+        String pazienteNome = prenotazione.getPaziente().getNome();
+        String pazienteCognome = prenotazione.getPaziente().getCognome();
+
+        String titolo = "Paziente non presentato";
+
+        String messaggio = String.format(
+                "Il paziente non si è presentato all'appuntamento.\n\n" +
+                        "Paziente: %s %s\n" +
+                        "Data e ora: %s\n" +
+                        "Numero: %s\n\n" +
+                        "La prenotazione è stata marcata come NON_PRESENTATO.",
+                pazienteNome,
+                pazienteCognome,
+                prenotazione.getDataOra().format(DATE_FORMATTER),
+                prenotazione.getNumeroPrenotazione()
+        );
+
+        String link = "/medico/prenotazioni/" + prenotazione.getId();
+
+        creaNotifica(
+                medicoUser,
+                TipoNotificaEnum.NO_SHOW,
+                titolo,
+                messaggio,
+                link,
+                false // No email per no-show
+        );
+    }
+
+    /**
+     * Sollecito conferma al medico (dopo 24h senza risposta)
+     */
+    @Transactional(readOnly = true)
+    public void sollecitaConfermaMedico(Prenotazione prenotazione) {
+        Users medicoUser = prenotazione.getMedico().getUser();
+
+        String pazienteNome = prenotazione.getPaziente().getNome();
+        String pazienteCognome = prenotazione.getPaziente().getCognome();
+
+        String titolo = "Sollecito: conferma prenotazione";
+
+        String messaggio = String.format(
+                "⚠️ RICHIESTA DI CONFERMA IN SOSPESO\n\n" +
+                        "Paziente: %s %s\n" +
+                        "Data e ora: %s\n" +
+                        "Numero: %s\n\n" +
+                        "ATTENZIONE: Se non confermi entro 24 ore dalla visita, " +
+                        "la prenotazione verrà automaticamente cancellata.",
+                pazienteNome,
+                pazienteCognome,
+                prenotazione.getDataOra().format(DATE_FORMATTER),
+                prenotazione.getNumeroPrenotazione()
+        );
+
+        String link = "/medico/prenotazioni/" + prenotazione.getId();
+
+        creaNotifica(
+                medicoUser,
+                TipoNotificaEnum.SOLLECITO,
+                titolo,
+                messaggio,
+                link,
+                true // Email importante
+        );
+    }
+
+    /**
      * Notifica al paziente: prenotazione confermata dal medico
      */
     @Transactional(readOnly = true)

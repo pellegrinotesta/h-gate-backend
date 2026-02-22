@@ -30,10 +30,7 @@ public interface NotificheRepository extends CrudRepository<Notifica, Integer> {
      */
     Long countByUserIdAndIsLettaFalse(Integer userId);
 
-    /**
-     * Trova notifiche per tipo
-     */
-    List<Notifica> findByUserIdAndTipoOrderByCreatedAtDesc(Integer userId, TipoNotificaEnum tipo);
+//    List<Notifica> findByPrenotazioneIdAndIsLettaFalse(Integer prenotazioneId);
 
     /**
      * Marca tutte le notifiche come lette

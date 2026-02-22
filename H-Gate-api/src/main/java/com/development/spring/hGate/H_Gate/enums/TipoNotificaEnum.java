@@ -9,6 +9,8 @@ public enum TipoNotificaEnum {
     RIFIUTO_PRENOTAZIONE("Prenotazione rifiutata"),
     ANNULLAMENTO_PRENOTAZIONE("Prenotazione annullata"),
     PROMEMORIA("Promemoria appuntamento"),
+    NO_SHOW("Non visualizzata"),
+    SOLLECITO("Sollecito promemoria"),
 
     // Referti
     NUOVO_REFERTO("Nuovo referto disponibile"),

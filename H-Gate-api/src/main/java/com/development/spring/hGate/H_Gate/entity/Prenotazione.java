@@ -36,15 +36,15 @@ public class Prenotazione extends BasicEntity {
     @Column(name = "numero_prenotazione", unique = true, nullable = false, length = 20)
     private String numeroPrenotazione;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "paziente_id", nullable = false)
     private Paziente paziente;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medico_id", nullable = false)
     private Medico medico;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(
             name = "created_by_user_id",
             nullable = false

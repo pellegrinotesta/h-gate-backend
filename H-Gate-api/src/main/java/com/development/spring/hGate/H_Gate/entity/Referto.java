@@ -27,15 +27,15 @@ public class Referto extends BasicEntity {
     @Column(unique = true, nullable = false, length = 36)
     private String uuid;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "prenotazione_id", unique = true, nullable = false)
     private Prenotazione prenotazione;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medico_id", nullable = false)
     private Medico medico;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "paziente_id", nullable = false)
     private Paziente paziente;
 

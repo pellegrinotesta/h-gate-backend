@@ -39,19 +39,6 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
             @Param("end") LocalDateTime end
     );
 
-    /**
-     * Trova prenotazioni del medico per un giorno specifico
-     */
-    @Query("SELECT p FROM Prenotazione p " +
-            "WHERE p.medico.id = :medicoId " +
-            "AND p.dataOra BETWEEN :start AND :end " +
-            "ORDER BY p.dataOra ASC")
-    List<Prenotazione> findByMedicoIdAndDate(
-            @Param("medicoId") Long medicoId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
-    );
-
     Integer countByDataOraBetween(LocalDateTime start, LocalDateTime end);
     @Query("SELECT COALESCE(SUM(p.costo), 0) FROM Prenotazione p WHERE p.stato = :stato AND p.dataOra BETWEEN :start AND :end")
     BigDecimal sumCostoByStatoAndDataOraBetween(@Param("stato") StatoPrenotazioneEnum stato, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
@@ -76,4 +63,8 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
     List<Prenotazione> findByStatoAndCreatedAtBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime limite);
 
     List<Prenotazione> findByStatoAndDataOraFineBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime unaOraFa);
+
+    List<Prenotazione> findByStatoAndDataOraBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime tra24Ore);
+
+    List<Prenotazione> findByStatoAndCreatedAtBeforeAndConfermaInviataFalse(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime limite);
 }

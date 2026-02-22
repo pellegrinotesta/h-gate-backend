@@ -49,4 +49,7 @@ public interface RefertoRepository extends CrudRepository<Referto, Integer> {
             "ORDER BY r.dataEmissione DESC " +
             "LIMIT 5")
     List<Referto> findTop5ByTutoreUserIdOrderByDataEmissioneDesc(@Param("tutoreUserId") Integer tutoreUserId);
+
+    @Query("SELECT r FROM Referto r WHERE r.prenotazione.id = :prenotazioneId")
+    Referto findByPrenotazioneId(@Param("prenotazioneId") Integer prenotazioneId);
 }

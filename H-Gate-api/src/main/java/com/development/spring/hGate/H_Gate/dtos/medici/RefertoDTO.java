@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class RefertoDTO {
 
+    private Integer id;
     private String uuid;
     private LocalDateTime dataEmissione;
     private String tipoReferto;
@@ -33,7 +34,7 @@ public class RefertoDTO {
     private String terapia;
     private String prescrizioni;
     private String noteMediche;
-    private String parametriVitali;
+    private ParametriVitaliDTO parametriVitali;
     private String esamiRichiesti;
     private LocalDate prossimoControllo;
     private Boolean isFirmato = false;

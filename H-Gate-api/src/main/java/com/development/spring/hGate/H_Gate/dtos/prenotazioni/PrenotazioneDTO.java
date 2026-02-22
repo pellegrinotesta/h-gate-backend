@@ -3,6 +3,7 @@ package com.development.spring.hGate.H_Gate.dtos.prenotazioni;
 import com.development.spring.hGate.H_Gate.dtos.medici.MedicoDTO;
 import com.development.spring.hGate.H_Gate.dtos.medici.RefertoDTO;
 import com.development.spring.hGate.H_Gate.dtos.UserDTO;
+import com.development.spring.hGate.H_Gate.entity.Users;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ public class PrenotazioneDTO {
     private String numeroPrenotazione;
     private PazienteMinDTO paziente;
     private MedicoDTO medico;
+    private UserDTO createdByUserId;
     private Date dataOra;
     private Date dataOraFine;
     private String tipoVisita;
@@ -44,8 +46,6 @@ public class PrenotazioneDTO {
     private Date createdAt;
     private Date updatedAt;
     private RefertoDTO referto;
-//    private RecensioneDTO recensione;
-//    private List<PagamentoDTO> pagamenti = new ArrayList<>();
 
     @Data
     @Builder

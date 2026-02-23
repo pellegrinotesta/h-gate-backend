@@ -63,8 +63,8 @@ public class Paziente extends BasicEntity {
     private String noteMediche;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "medico_base_id")
-    private Medico medicoBase;
+    @JoinColumn(name = "medico_id")
+    private Medico medico;
 
     @Column(name = "consenso_privacy")
     private Boolean consensoPrivacy = false;

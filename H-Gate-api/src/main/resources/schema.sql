@@ -334,7 +334,6 @@ CREATE TABLE `notifiche` (
                'SISTEMA',
                'NUOVA_PRENOTAZIONE',    -- Aggiunto
                'CONFERMA_PRENOTAZIONE', -- Aggiunto
-               'RIFIUTO_PRENOTAZIONE',
                'ANNULLAMENTO_PRENOTAZIONE',
                'RIFIUTO_PRENOTAZIONE') NOT NULL,   -- Aggiunto NOT NULL,
     `titolo` VARCHAR(200) NOT NULL,

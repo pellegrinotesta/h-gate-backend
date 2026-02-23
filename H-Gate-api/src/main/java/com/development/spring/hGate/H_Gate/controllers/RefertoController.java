@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("referto")
@@ -25,6 +27,20 @@ public class RefertoController {
         try {
             res.setOk(true);
             res.setData(refertoMapper.convertModelToDTO(refertoService.findByPrenotazioneId(prenotazioneId)));
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+        return res;
+    }
+
+    @GetMapping("/{pazienteId}/all")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN')")
+    public ResponseDTO<List<RefertoDTO>> listaRefertiPaziente(@PathVariable("pazienteId") Integer pazienteId) {
+        ResponseDTO<List<RefertoDTO>> res = new ResponseDTO<>();
+        try {
+             res.setOk(true);
+             res.setData(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)));
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());

@@ -31,6 +31,20 @@ public class PazienteController {
     private final PazienteService pazienteService;
     private final PazienteMapper pazienteMapper;
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    public ResponseDTO<PazienteDTO> getById(@PathVariable("id") Integer id) {
+        ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(pazienteMapper.convertModelToDTO(pazienteService.getById(id)));
+        } catch (Exception e) {
+            res.setOk(false);
+            res.setMessage(e.getMessage());
+        }
+        return res;
+    }
+
     @PostMapping("/advanced-search")
     @PreAuthorize("hasAuthority('MEDICO')")
     public PaginatedResponseDTO<PazienteDTO> advancedSearch(
@@ -42,7 +56,7 @@ public class PazienteController {
 
         return PaginatedResponseDTO.success(data);
     }
-    
+
     @GetMapping("/user-id")
     public ResponseDTO<List<PazienteDTO>> findByUserId(JwtAuthentication jwtAuthentication) {
         ResponseDTO<List<PazienteDTO>> res = new ResponseDTO<>();

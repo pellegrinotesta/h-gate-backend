@@ -39,8 +39,8 @@ public class RefertoService extends BasicEntity {
         return refertoRepository.findTop5ByTutoreUserIdOrderByDataEmissioneDesc(tutoreUserId);
     }
 
-    public List<Referto> listaRefertiPaziente(Integer userId) {
-        return refertoRepository.listaRefertiPaziente(userId);
+    public List<Referto> listaRefertiPaziente(Integer pazienteId) {
+        return refertoRepository.listaRefertiPaziente(pazienteId);
     }
 
     @Transactional

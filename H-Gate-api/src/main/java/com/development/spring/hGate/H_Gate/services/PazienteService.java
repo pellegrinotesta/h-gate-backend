@@ -101,6 +101,10 @@ public class PazienteService extends BasicService {
         return filter.toSpecification(pazienteSpecificationsFactory);
     }
 
+    public Paziente getById(Integer id) {
+        return pazienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, PAZIENTE_ID_NOT_FOUND));
+    }
+
     public List<Paziente> findByUserId(JwtAuthentication jwtAuthentication) {
         return pazienteRepository.findByUserId(jwtAuthentication.getId());
     }

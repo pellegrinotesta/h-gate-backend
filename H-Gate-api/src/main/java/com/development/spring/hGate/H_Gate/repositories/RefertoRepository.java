@@ -14,11 +14,9 @@ public interface RefertoRepository extends CrudRepository<Referto, Integer> {
     @Query("""
     SELECT r
     FROM Referto r
-    JOIN PazienteTutore pt ON pt.paziente.id = r.paziente.id
-    JOIN TutoreLegale t ON pt.tutore.id = t.id
-    WHERE t.user.id = :userId
+    WHERE r.paziente.id = :pazienteId
     """)
-    List<Referto> listaRefertiPaziente(@Param("userId") Integer userId);
+    List<Referto> listaRefertiPaziente(@Param("pazienteId") Integer pazienteId);
 
     @Query("SELECT COUNT(DISTINCT m.user.id) FROM Referto r JOIN Medico m ON r.medico.id = m.id WHERE m.user.id = :userId and r.isFirmato is false")
     Integer countByMedicoAndIsFirmato(@Param("userId") Integer userId);

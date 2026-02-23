@@ -183,33 +183,32 @@ public class PrenotazioneService extends BasicService {
     @Transactional
     public Prenotazione completaPrenotazione(Integer medicoUserId, Integer prenotazioneId) {
 
-        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                PRENOTAZIONE_NOT_FOUND
-        ));
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
 
         Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
 
         if (!prenotazione.getMedico().getId().equals(medico.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Non sei autorizzato a completare questa prenotazione"
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Non sei autorizzato a completare questa prenotazione");
         }
 
         if (prenotazione.getStato() != StatoPrenotazioneEnum.CONFERMATA) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Questa prenotazione non è in attesa di completamentp"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Questa prenotazione non è in attesa di completamento");
+        }
+
+        // ← Controllo data di fine
+        if (prenotazione.getDataOraFine() != null &&
+                LocalDateTime.now().isBefore(prenotazione.getDataOraFine())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La prenotazione non può essere completata prima della fine della visita");
         }
 
         prenotazione.setStato(StatoPrenotazioneEnum.COMPLETATA);
         prenotazione.setConfermaInviata(true);
 
-        prenotazione = prenotazioneRepository.save(prenotazione);
-
-        return prenotazione;
+        return prenotazioneRepository.save(prenotazione);
     }
 
 

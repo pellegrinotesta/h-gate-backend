@@ -19,6 +19,20 @@ public class ValutazionePsicologicaController {
 
     private final ValutazionePsicologicaService valutazioneService;
 
+    @GetMapping("/paziente/{pazienteId}/medico")
+    public ResponseDTO<List<ValutazionePsicologicaDTO>> valutazionePsicologicaMedicoAndPaziente(@PathVariable("pazienteId") Integer pazienteId, JwtAuthentication jwtAuthentication) {
+        ResponseDTO<List<ValutazionePsicologicaDTO>> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(valutazioneService.valutazionePsicologicaMedicoAndPaziente(pazienteId, jwtAuthentication.getId()));
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
     @GetMapping("/paziente/{pazienteId}")
     @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN')")
     public ResponseDTO<List<ValutazionePsicologicaDTO>> getByPaziente(

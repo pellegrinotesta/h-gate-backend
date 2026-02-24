@@ -27,6 +27,11 @@ public class ValutazionePsicologicaService extends BasicService {
     private final PazienteRepository pazienteRepository;
     private final MedicoRepository medicoRepository;
 
+    public List<ValutazionePsicologicaDTO> valutazionePsicologicaMedicoAndPaziente(Integer pazienteId, Integer medicoId) {
+        return valutazionePsicologicaRepository.valutazioniPsicologicaPazienteAndMedico(pazienteId, medicoId).stream().map(this::toDTO).toList();
+    }
+
+
     public List<ValutazionePsicologicaDTO> getByPaziente(Integer pazienteId) {
         return valutazionePsicologicaRepository.findByPazienteIdOrderByDataValutazioneDesc(pazienteId)
                 .stream().map(this::toDTO).toList();

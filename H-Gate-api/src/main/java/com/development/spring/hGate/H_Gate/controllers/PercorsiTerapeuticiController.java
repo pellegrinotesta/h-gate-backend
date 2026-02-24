@@ -19,7 +19,7 @@ public class PercorsiTerapeuticiController {
 
     private final PercorsiTerapeuticiService percorsiTerapeuticiService;
 
-    @GetMapping("/{pazienteId}")
+    @GetMapping("/paziente/{pazienteId}")
     public ResponseDTO<List<PercorsiTerapeuticiDTO>> percorsiTerapeuticiMedicoAndPaziente(JwtAuthentication jwtAuthentication, @PathVariable("pazienteId") Integer pazienteId) {
         ResponseDTO<List<PercorsiTerapeuticiDTO>> res = new ResponseDTO<>();
         try {
@@ -27,6 +27,20 @@ public class PercorsiTerapeuticiController {
             res.setOk(true);
             res.setData(percorsiTerapeuticiService.percorsiTerapeuticiMedicoAndPaziente(jwtAuthentication.getId(), pazienteId));
 
+        } catch (Exception ex) {
+            res.setOk(false);
+            res.setMessage(ex.getMessage());
+        }
+
+        return res;
+    }
+
+    @GetMapping("/{pazienteId}/paziente")
+    public ResponseDTO<List<PercorsiTerapeuticiDTO>> getByPaziente(@PathVariable("pazienteId") Integer pazienteId) {
+        ResponseDTO<List<PercorsiTerapeuticiDTO>> res = new ResponseDTO<>();
+        try {
+            res.setOk(true);
+            res.setData(percorsiTerapeuticiService.getByPaziente(pazienteId));
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());

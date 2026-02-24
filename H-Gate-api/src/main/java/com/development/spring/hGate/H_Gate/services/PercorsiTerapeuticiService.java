@@ -33,6 +33,11 @@ public class PercorsiTerapeuticiService extends BasicService {
         ).stream().map(this::toDTO).toList();
     }
 
+    public List<PercorsiTerapeuticiDTO> getByPaziente(Integer pazienteId) {
+        return percorsiTerapeuticiRepository.findByPazienteIdOrderByDataInizioDesc(pazienteId)
+                .stream().map(this::toDTO).toList();
+    }
+
     @Transactional
     public PercorsiTerapeuticiDTO create(
             Integer medicoId,

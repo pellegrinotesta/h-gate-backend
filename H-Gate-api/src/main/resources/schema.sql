@@ -271,7 +271,7 @@ CREATE TABLE `referti` (
 CREATE TABLE `allegati` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `uuid` CHAR(36) UNIQUE NOT NULL DEFAULT (UUID()),
-    `referto_id` INT NOT NULL,
+    `prenotazione_id` INT NOT NULL,
     `nome_file` VARCHAR(255) NOT NULL,
     `tipo_file` ENUM('PDF', 'JPG', 'JPEG', 'PNG', 'DICOM', 'TXT') NOT NULL,
     `mime_type` VARCHAR(100) NOT NULL,
@@ -283,10 +283,10 @@ CREATE TABLE `allegati` (
     `uploaded_by` INT NULL,
     `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (`referto_id`) REFERENCES `referti`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`prenotazione_id`) REFERENCES `prenotazioni`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
 
-    INDEX `idx_referto` (`referto_id`),
+    INDEX `idx_prenotazioni` (`prenotazione_id`),
     INDEX `idx_tipo` (`tipo_file`),
     INDEX `idx_uploaded_at` (`uploaded_at`),
 

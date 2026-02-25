@@ -26,18 +26,16 @@ public class Allegato extends BasicEntity {
     @Column(unique = true, nullable = false, length = 36)
     private String uuid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "referto_id", nullable = false)
-    @JsonIgnore
-    private Referto referto;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "prenotazione_id", nullable = false)
+    private Prenotazione prenotazione;
 
     @NotBlank
     @Column(name = "nome_file", nullable = false)
     private String nomeFile;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_file", nullable = false)
-    private TipoFileEnum tipoFile;
+    private String tipoFile;
 
     @NotBlank
     @Column(name = "mime_type", nullable = false, length = 100)

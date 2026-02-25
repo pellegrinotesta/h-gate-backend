@@ -11,7 +11,10 @@ spring:
   application:
     name: @project.name@
     version: @project.version@
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
   mail:
     host: smtp.gmail.com
     port: 587
@@ -33,15 +36,17 @@ spring:
       hibernate:
         jdbc:
           time_zone: Europe/Rome
-
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+
+app:
+  upload:
+    dir: ./uploads/allegati
 
 application:
   jwt:
     secretKey: dsalkjdjkfjklafojlkas7jklfjkadlnjfanjfnjkladsjklfjlkaenklfankljodsaf0ji
     cryptoKey: Qs23RBNF330ms00n
-
     tokenDurationMs: 1800000
     tokenRenewBeforeExpirationMs: 1800000

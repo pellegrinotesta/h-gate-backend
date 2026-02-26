@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,4 +24,7 @@ public interface PazienteTutoreRepository extends CrudRepository<PazienteTutore,
             @Param("pazienteId") Integer pazienteId,
             @Param("tutoreId") Integer tutoreId
     );
+
+    @Query("SELECT pt.paziente.id FROM PazienteTutore pt WHERE pt.tutore.user.id = :tutoreUserId")
+    List<Integer> findPazienteIdsByTutoreUserId(@Param("tutoreUserId") Integer tutoreUserId);
 }

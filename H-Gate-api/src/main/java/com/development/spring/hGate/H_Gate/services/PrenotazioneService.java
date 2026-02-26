@@ -93,12 +93,6 @@ public class PrenotazioneService extends BasicService {
             );
         }
 
-        boolean hasPrenotazioniOggi = prenotazioneRepository.existsByPazienteIdAndDataOraBetween(paziente.getId(), dataOra.toLocalDate().atStartOfDay(), dataOra.toLocalDate().atTime(23,59,59));
-
-        if(hasPrenotazioniOggi) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Hai già una prenotazione per questo paziente in questo giorno");
-        }
-
         BigDecimal costo = tariffeMediciRepository.findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita()).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Tariffa non configurata"

@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class AllegatoDTO {
 
+    private Integer id;
     private String uuid;
     private String nomeFile;
     private String tipoFile;

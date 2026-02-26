@@ -215,13 +215,11 @@ public class PrenotazioneService extends BasicService {
     @Transactional
     public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {
 
-        // Verifica che la prenotazione esista
         Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Prenotazione non trovata"
                 ));
 
-        // Verifica che il tutore sia autorizzato
         TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
                         "Tutore non trovato"
@@ -234,7 +232,6 @@ public class PrenotazioneService extends BasicService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non sei autorizzato ad annullare questa prenotazione");
         }
 
-        // Verifica che la prenotazione non sia già completata o annullata
         if (prenotazione.getStato() == StatoPrenotazioneEnum.COMPLETATA) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

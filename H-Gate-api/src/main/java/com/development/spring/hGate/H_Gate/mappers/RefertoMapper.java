@@ -1,10 +1,12 @@
 package com.development.spring.hGate.H_Gate.mappers;
 
+import com.development.spring.hGate.H_Gate.dtos.medici.ParametriVitaliDTO;
 import com.development.spring.hGate.H_Gate.dtos.medici.RefertoCreateDTO;
 import com.development.spring.hGate.H_Gate.dtos.medici.RefertoDTO;
 import com.development.spring.hGate.H_Gate.dtos.medici.RefertoUpdateDTO;
 import com.development.spring.hGate.H_Gate.entity.Referto;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
 
@@ -15,14 +17,33 @@ public interface RefertoMapper {
 
     // parametriVitali ignorato: è String sull'entity, Object nel DTO
     // la conversione è gestita dal RefertoService con ObjectMapper
-    @Mapping(target = "parametriVitali", ignore = true)
+    @Mapping(target = "parametriVitali", source = "parametriVitali", qualifiedByName = "stringToParametriVitali")
     RefertoDTO convertModelToDTO(Referto referto);
 
-    @Mapping(target = "parametriVitali", ignore = true)
+    @Mapping(target = "parametriVitali", source = "parametriVitali", qualifiedByName = "parametriVitaliToString")
     Referto convertDtoToModel(RefertoDTO refertoDTO);
 
-    @Mapping(target = "parametriVitali", ignore = true)
     List<RefertoDTO> convertModelsToDtos(List<Referto> referto);
+
+    @Named("stringToParametriVitali")
+    default ParametriVitaliDTO stringToParametriVitali(String json) {
+        if (json == null) return null;
+        try {
+            return new ObjectMapper().readValue(json, ParametriVitaliDTO.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Named("parametriVitaliToString")
+    default String parametriVitaliToString(ParametriVitaliDTO dto) {
+        if (dto == null) return null;
+        try {
+            return new ObjectMapper().writeValueAsString(dto);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateModel(Referto source, @MappingTarget Referto target);

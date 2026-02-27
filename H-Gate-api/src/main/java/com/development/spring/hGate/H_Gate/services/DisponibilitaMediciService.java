@@ -70,52 +70,12 @@ public class DisponibilitaMediciService extends BasicService {
         return disponibilitaMediciRepository.save(disponibilita);
     }
 
-    public List<DisponibilitaMedico> findByMedicoUserId(Integer medicoUserId) {
-        return disponibilitaMediciRepository.findByMedicoUserId(medicoUserId);
-    }
-
     /**
      * Ottiene tutte le disponibilità di un medico
      */
     @Transactional(readOnly = true)
     public List<DisponibilitaMedico> getDisponibilitaMedico(Integer medicoId) {
         return disponibilitaMediciRepository.findByMedicoIdOrderByGiornoSettimana(medicoId);
-    }
-
-    /**
-     * Ottiene la disponibilità per uno specifico giorno della settimana
-     */
-    @Transactional(readOnly = true)
-    public Optional<DisponibilitaMedico> getDisponibilitaPerGiorno(
-            Integer medicoId,
-            Integer giornoSettimana
-    ) {
-        return disponibilitaMediciRepository.findByMedicoIdAndGiornoSettimana(
-                medicoId,
-                giornoSettimana
-        );
-    }
-
-    /**
-     * Verifica se il medico è disponibile in una data specifica
-     */
-    @Transactional(readOnly = true)
-    public boolean isMedicoDisponibile(Integer medicoId, LocalDate data, LocalTime ora) {
-        // Converti LocalDate in giorno della settimana (0=Lunedì, 6=Domenica)
-        int giornoSettimana = data.getDayOfWeek().getValue() - 1;
-
-        Optional<DisponibilitaMedico> disponibilita = disponibilitaMediciRepository
-                .findByMedicoIdAndGiornoSettimanaAndIsAttivaTrue(medicoId, giornoSettimana);
-
-        if (disponibilita.isEmpty()) {
-            return false;
-        }
-
-        DisponibilitaMedico disp = disponibilita.get();
-
-        // Verifica se l'ora rientra nell'intervallo
-        return !ora.isBefore(disp.getOraInizio()) &&
-                !ora.isAfter(disp.getOraFine());
     }
 
     /**

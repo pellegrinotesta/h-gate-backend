@@ -182,6 +182,22 @@ public class PrenotazioneService extends BasicService {
 
         Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
 
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate dataVisita = prenotazione.getDataOra().toLocalDate();
+        LocalDate oggi = now.toLocalDate();
+
+        // Non completabile prima del giorno della visita
+        if (oggi.isBefore(dataVisita)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Non puoi completare una visita non ancora avvenuta");
+        }
+
+        // Non completabile dopo 7 giorni
+        if (oggi.isAfter(dataVisita.plusDays(7))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Non puoi completare una visita avvenuta più di 7 giorni fa");
+        }
+
         if (!prenotazione.getMedico().getId().equals(medico.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Non sei autorizzato a completare questa prenotazione");

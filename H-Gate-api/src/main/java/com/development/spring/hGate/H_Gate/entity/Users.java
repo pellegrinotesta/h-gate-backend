@@ -95,14 +95,6 @@ public class Users extends BasicEntity {
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    // Metodi helper
-    @PrePersist
-    protected void onCreate() {
-        if (uuid == null) {
-            uuid = UUID.randomUUID().toString();
-        }
-    }
-
     @JsonProperty("nomeCompleto")
     public String getNomeCompleto() {
         return nome + " " + cognome;

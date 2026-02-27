@@ -15,8 +15,6 @@ import java.util.List;
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
 public interface RefertoMapper {
 
-    // parametriVitali ignorato: è String sull'entity, Object nel DTO
-    // la conversione è gestita dal RefertoService con ObjectMapper
     @Mapping(target = "parametriVitali", source = "parametriVitali", qualifiedByName = "stringToParametriVitali")
     RefertoDTO convertModelToDTO(Referto referto);
 

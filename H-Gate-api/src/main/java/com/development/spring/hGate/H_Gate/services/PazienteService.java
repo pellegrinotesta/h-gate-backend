@@ -209,16 +209,7 @@ public class PazienteService extends BasicService {
                 .sesso(p.getSesso())
                 .gruppoSanguigno(p.getGruppoSanguigno())
                 .relazione(rel != null ? rel.getRelazione() : null)
-                // Uncomment quando implementi calculateAge
-                // .eta(calculateAge(p.getDataNascita()))
                 .build();
     }
 
-    // Metodo helper per calcolare l'età (opzionale)
-    /*
-    private Integer calculateAge(LocalDate birthDate) {
-        if (birthDate == null) return null;
-        return Period.between(birthDate, LocalDate.now()).getYears();
-    }
-    */
 }

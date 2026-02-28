@@ -79,18 +79,5 @@ public class DashboardController {
         return res;
     }
 
-    @GetMapping("/medici-da-verificare")
-
-    public ResponseDTO<List<MedicoDaVerificare>> getMediciDaVerificare() {
-        ResponseDTO<List<MedicoDaVerificare>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(dashboardService.getMediciDaVerificare());
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
-        return res;
-    }
 
 }

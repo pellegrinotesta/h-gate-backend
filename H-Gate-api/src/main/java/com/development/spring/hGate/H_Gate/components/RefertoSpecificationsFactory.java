@@ -30,6 +30,8 @@ public class RefertoSpecificationsFactory implements SpecificationFactory<Refert
 
     private final Set<String> searchableFields = Set.of(
             "dataEmissione",
+            "dataEmissioneDa",
+            "dataEmissioneA",
             "tipoReferto",
             "nomeMedico"
     );
@@ -55,25 +57,24 @@ public class RefertoSpecificationsFactory implements SpecificationFactory<Refert
                 return buildFieldIsLikeIgnoreCaseSpecification(fieldName, value);
             case NOT_EQUALS:
                 return buildFieldIsNotEqualSpecification(fieldName, value);
-            case IS_DATE_LTS:
-                try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat(DATA_PATTERN);
-                    Date date = dateFormat.parse(value);
-                    return buildNestedFieldDateLessThanSpecification(fieldName, date);
-                } catch (ParseException e) {
-                    String message = String.format(INVALID_DATA_PARSING, e.getMessage());
-                    logger.debug(message);
-                    throw new RuntimeException();
-                }
             case IS_DATE_GTS:
                 try {
                     SimpleDateFormat dateFormat = new SimpleDateFormat(DATA_PATTERN);
                     Date date = dateFormat.parse(value);
                     return buildNestedFieldDateGreaterThanSpecification(fieldName, date);
                 } catch (ParseException e) {
-                    String message = String.format(INVALID_DATA_PARSING, e.getMessage());
-                    logger.debug(message);
-                    throw new RuntimeException();
+                    logger.debug(INVALID_DATA_PARSING, e.getMessage());
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_DATA_PARSING);
+                }
+
+            case IS_DATE_LTS:
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat(DATA_PATTERN);
+                    Date date = dateFormat.parse(value);
+                    return buildNestedFieldDateLessThanSpecification(fieldName, date);
+                } catch (ParseException e) {
+                    logger.debug(INVALID_DATA_PARSING, e.getMessage());
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_DATA_PARSING);
                 }
             default: {
                 String message = String

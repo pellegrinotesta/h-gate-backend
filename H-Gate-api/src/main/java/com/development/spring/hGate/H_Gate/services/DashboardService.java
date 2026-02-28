@@ -87,7 +87,6 @@ public class DashboardService extends BasicService {
         return DashboardAdminResponse.builder()
                 .kpi(kpi)
                 .stats(generateStatCards(kpi))
-                .mediciDaVerificare(getMediciDaVerificare())
                 .attivitaRecenti(getAttivitaRecenti())
                 .build();
     }
@@ -151,7 +150,6 @@ public class DashboardService extends BasicService {
                 .prenotazioniDaConfermare(kpi.getPrenotazioniDaConfermare())
                 .prenotazioniAnnullateMese(kpi.getPrenotazioniAnnullateMese())
                 .percorsiAttivi(kpi.getPercorsiAttivi())
-                .percorsiInValutazione(kpi.getPercorsiInValutazione())
                 .percorsiSospesi(kpi.getPercorsiSospesi())
                 .refertiEmessiMese(kpi.getRefertiEmessiMese())
                 .refertiDaFirmare(kpi.getRefertiDaFirmare())
@@ -208,33 +206,7 @@ public class DashboardService extends BasicService {
         return cards;
     }
 
-    /**
-     * Recupera medici da verificare
-     */
-    @Transactional(readOnly = true)
-    public List<DashboardAdminResponse.MedicoDaVerificare> getMediciDaVerificare() {
-        return medicoRepository.findMediciDaVerificare().stream()
-                .map(this::mapMedicoToDto)
-                .collect(Collectors.toList());
-    }
 
-    /**
-     * Mappa medico a DTO
-     */
-    private DashboardAdminResponse.MedicoDaVerificare mapMedicoToDto(Medico medico) {
-        return DashboardAdminResponse.MedicoDaVerificare.builder()
-                .id(medico.getId())
-                .nome(medico.getUser().getNome())
-                .cognome(medico.getUser().getCognome())
-                .email(medico.getUser().getEmail())
-                .specializzazione(medico.getSpecializzazione())
-                .numeroAlbo(medico.getNumeroAlbo())
-                .universita(medico.getUniversita())
-                .annoLaurea(medico.getAnnoLaurea())
-//                .createdAt(medico.getCreatedAt())
-//                .hasDocuments(medico.getDocumenti() != null && !medico.getDocumenti().isEmpty())
-                .build();
-    }
 
     /**
      * Recupera attività recenti

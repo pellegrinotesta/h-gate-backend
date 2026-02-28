@@ -142,7 +142,7 @@ CREATE TABLE pazienti_tutori (
 CREATE TABLE percorsi_terapeutici (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paziente_id INTEGER NOT NULL,
-    medico_id INTEGER NOT NULL,
+    medico_user_id INTEGER NOT NULL,
     titolo VARCHAR(200) NOT NULL,
     obiettivi TEXT,
     data_inizio DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -153,7 +153,7 @@ CREATE TABLE percorsi_terapeutici (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (paziente_id) REFERENCES pazienti(id) ON DELETE CASCADE,
-    FOREIGN KEY (medico_id) REFERENCES medici(id)
+    FOREIGN KEY (medico_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_percorsi_paziente ON percorsi_terapeutici(paziente_id);
@@ -161,7 +161,7 @@ CREATE INDEX idx_percorsi_paziente ON percorsi_terapeutici(paziente_id);
 CREATE TABLE valutazioni_psicologiche (
     id SERIAL PRIMARY KEY,
     paziente_id INTEGER NOT NULL,
-    medico_id INTEGER NOT NULL,
+    medico_user_id INTEGER NOT NULL,
     data_valutazione DATETIME DEFAULT CURRENT_TIMESTAMP,
     tipo_test VARCHAR(100) NOT NULL, -- es: WISC-IV, CARS-2
     punteggi JSON,
@@ -169,7 +169,7 @@ CREATE TABLE valutazioni_psicologiche (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (paziente_id) REFERENCES pazienti(id) ON DELETE CASCADE,
-    FOREIGN KEY (medico_id) REFERENCES medici(id)
+    FOREIGN KEY (medico_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE `amministratori` (
@@ -271,7 +271,7 @@ CREATE TABLE `referti` (
 CREATE TABLE `allegati` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `uuid` CHAR(36) UNIQUE NOT NULL DEFAULT (UUID()),
-    `referto_id` INT NOT NULL,
+    `prenotazione_id` INT NOT NULL,
     `nome_file` VARCHAR(255) NOT NULL,
     `tipo_file` ENUM('PDF', 'JPG', 'JPEG', 'PNG', 'DICOM', 'TXT') NOT NULL,
     `mime_type` VARCHAR(100) NOT NULL,
@@ -283,10 +283,10 @@ CREATE TABLE `allegati` (
     `uploaded_by` INT NULL,
     `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (`referto_id`) REFERENCES `referti`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`prenotazione_id`) REFERENCES `prenotazioni`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
 
-    INDEX `idx_referto` (`referto_id`),
+    INDEX `idx_prenotazioni` (`prenotazione_id`),
     INDEX `idx_tipo` (`tipo_file`),
     INDEX `idx_uploaded_at` (`uploaded_at`),
 
@@ -334,6 +334,7 @@ CREATE TABLE `notifiche` (
                'SISTEMA',
                'NUOVA_PRENOTAZIONE',    -- Aggiunto
                'CONFERMA_PRENOTAZIONE', -- Aggiunto
+               'ANNULLAMENTO_PRENOTAZIONE',
                'RIFIUTO_PRENOTAZIONE') NOT NULL,   -- Aggiunto NOT NULL,
     `titolo` VARCHAR(200) NOT NULL,
     `messaggio` TEXT NOT NULL,
@@ -390,26 +391,6 @@ CREATE TABLE `eccezioni_disponibilita` (
     CHECK (`data_fine` >= `data_inizio`)
 );
 
-CREATE TABLE `audit_log` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT NULL,
-    `azione` VARCHAR(100) NOT NULL,
-    `tabella` VARCHAR(100) NULL,
-    `record_id` INT NULL,
-    `dati_prima` JSON NULL,
-    `dati_dopo` JSON NULL,
-    `ip_address` VARCHAR(45) NULL,
-    `user_agent` TEXT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
-
-    INDEX `idx_user` (`user_id`),
-    INDEX `idx_azione` (`azione`),
-    INDEX `idx_tabella` (`tabella`),
-    INDEX `idx_created_at` (`created_at` DESC)
-);
-
 CREATE TABLE `statistiche_giornaliere` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `data` DATE UNIQUE NOT NULL,
@@ -430,108 +411,6 @@ CREATE TABLE `statistiche_giornaliere` (
 -- ============================================================
 -- VISTE (VIEWS)
 -- ============================================================
-
--- ============================================================
--- VISTA: v_pazienti_completi
--- Pazienti (bambini) con informazioni tutore principale
--- ============================================================
-DROP VIEW IF EXISTS `v_pazienti_completi`;
-
-CREATE VIEW `v_pazienti_completi` AS
-SELECT
-    -- Dati Paziente (bambino)
-    p.id AS paziente_id,
-    p.nome AS paziente_nome,
-    p.cognome AS paziente_cognome,
-    p.codice_fiscale,
-    p.data_nascita,
-    p.sesso,
-    p.citta,
-    TIMESTAMPDIFF(YEAR, p.data_nascita, CURDATE()) AS eta_anni,
-    TIMESTAMPDIFF(MONTH, p.data_nascita, CURDATE()) % 12 AS eta_mesi,
-    p.gruppo_sanguigno,
-    p.altezza_cm,
-    p.peso_kg,
-    p.allergie,
-    p.patologie_croniche,
-    p.note_mediche,
-    p.medico_id,
-    p.consenso_privacy,
-    p.consenso_marketing,
-    p.created_at,
-
-    -- Dati Tutore Principale
-    u.id AS tutore_user_id,
-    u.uuid AS tutore_uuid,
-    u.email AS tutore_email,
-    u.nome AS tutore_nome,
-    u.cognome AS tutore_cognome,
-    u.telefono AS tutore_telefono,
-    u.indirizzo AS tutore_indirizzo,
-    u.citta AS tutore_citta,
-    u.provincia AS tutore_provincia,
-    pt.relazione AS tutore_relazione,
-
-    -- Conteggi
-    (SELECT COUNT(*) FROM pazienti_tutori pt2 WHERE pt2.paziente_id = p.id) AS numero_tutori,
-    (SELECT COUNT(*) FROM percorsi_terapeutici perc WHERE perc.paziente_id = p.id) AS numero_percorsi,
-    (SELECT COUNT(*) FROM prenotazioni pr WHERE pr.paziente_id = p.id) AS numero_prenotazioni
-
-FROM pazienti p
-LEFT JOIN pazienti_tutori pt ON p.id = pt.paziente_id
-LEFT JOIN tutori_legali tl ON pt.tutore_id = tl.id
-LEFT JOIN users u ON tl.user_id = u.id;
-
--- ============================================================
--- VISTA: v_medici_completi
--- Specialisti con tutte le informazioni
--- ============================================================
-DROP VIEW IF EXISTS `v_medici_completi`;
-
-CREATE VIEW v_medici_completi AS
-SELECT
-    u.id AS user_id,
-    u.uuid,
-    u.email,
-    u.nome,
-    u.cognome,
-    u.telefono,
-    u.data_nascita,
-    u.indirizzo,
-    u.citta,
-    u.provincia,
-    u.cap,
-    u.is_active,
-    u.is_verified,
-    u.created_at,
-
-    m.id AS medico_id,
-    m.specializzazione,
-    m.numero_albo,
-    m.universita,
-    m.anno_laurea,
-    m.bio,
-    m.curriculum,
-    m.orari_disponibilita,
-    m.durata_visita_minuti,
-    m.pausa_tra_visite_minuti,
-    m.anticipo_prenotazione_giorni,
-    m.is_disponibile,
-    m.is_verificato,
-    m.data_verifica,
-    m.rating_medio,
-    m.numero_recensioni,
-    m.numero_pazienti,
-
-    (SELECT COUNT(*) FROM prenotazioni pr WHERE pr.medico_id = m.id) AS totale_prenotazioni,
-    (SELECT COUNT(*) FROM prenotazioni pr WHERE pr.medico_id = m.id AND pr.stato = 'COMPLETATA') AS prenotazioni_completate,
-    (SELECT COUNT(*) FROM disponibilita_medici dm WHERE dm.medico_id = m.id AND dm.is_attiva = TRUE) AS fasce_disponibilita
-
-FROM users u
-INNER JOIN medici m ON u.id = m.user_id
-INNER JOIN roles r ON r.user_id = u.id
-WHERE r.role = 'MEDICO';
-
 
 -- ============================================================
 -- VISTA: v_prenotazioni_dettagliate
@@ -609,94 +488,6 @@ JOIN users um          ON m.user_id = um.id
 LEFT JOIN users ut     ON pr.created_by_user_id = ut.id;
 
 
--- ============================================================
--- VISTA: v_tutori_completi
--- Vista dei tutori con i loro pazienti
--- ============================================================
-DROP VIEW IF EXISTS `v_tutori_completi`;
-
-CREATE VIEW `v_tutori_completi` AS
-SELECT
-    -- Dati User/Tutore
-    u.id AS user_id,
-    u.uuid,
-    u.email,
-    u.nome,
-    u.cognome,
-    u.telefono,
-    u.indirizzo,
-    u.citta,
-    u.provincia,
-    u.is_active,
-    u.created_at,
-
-    -- Dati Tutore Legale
-    tl.id AS tutore_id,
-
-    -- Statistiche
-    (SELECT COUNT(*) FROM pazienti_tutori pt WHERE pt.tutore_id = tl.id) AS numero_pazienti,
-    (SELECT COUNT(*)
-     FROM prenotazioni pr
-     INNER JOIN pazienti_tutori pt ON pr.paziente_id = pt.paziente_id
-     WHERE pt.tutore_id = tl.id) AS totale_prenotazioni,
-    (SELECT COUNT(*)
-     FROM prenotazioni pr
-     INNER JOIN pazienti_tutori pt ON pr.paziente_id = pt.paziente_id
-     WHERE pt.tutore_id = tl.id
-     AND pr.data_ora > NOW()) AS prenotazioni_future
-
-FROM users u
-INNER JOIN tutori_legali tl ON u.id = tl.user_id
-INNER JOIN roles r ON r.user_id = u.id
-WHERE r.role = 'TUTORE';
-
--- ============================================================
--- VISTA: v_percorsi_attivi
--- Percorsi terapeutici in corso con dettagli
--- ============================================================
-DROP VIEW IF EXISTS `v_percorsi_attivi`;
-
-CREATE VIEW `v_percorsi_attivi` AS
-SELECT
-    -- Dati Percorso
-    pt.id AS percorso_id,
-    pt.titolo,
-    pt.obiettivi,
-    pt.stato,
-    pt.data_inizio,
-    pt.data_fine_prevista,
-    pt.numero_sedute_previste,
-    pt.numero_sedute_effettuate,
-    CASE
-        WHEN pt.numero_sedute_previste > 0
-        THEN ROUND((pt.numero_sedute_effettuate / pt.numero_sedute_previste * 100), 2)
-        ELSE 0
-    END AS percentuale_completamento,
-
-    -- Dati Paziente
-    p.id AS paziente_id,
-    CONCAT(p.nome, ' ', p.cognome) AS paziente_nome,
-    p.data_nascita AS paziente_data_nascita,
-    TIMESTAMPDIFF(YEAR, p.data_nascita, CURDATE()) AS paziente_eta,
-
-    -- Dati Medico Referente
-    m.id AS medico_id,
-    CONCAT(u.nome, ' ', u.cognome) AS medico_nome,
-    m.specializzazione AS medico_specializzazione,
-
-    -- Prossimo Appuntamento
-    (SELECT MIN(pr.data_ora)
-     FROM prenotazioni pr
-     WHERE pr.paziente_id = p.id
-     AND pr.medico_id = m.id
-     AND pr.stato IN ('CONFERMATA', 'IN_ATTESA')
-     AND pr.data_ora > NOW()) AS prossimo_appuntamento
-
-FROM percorsi_terapeutici pt
-INNER JOIN pazienti p ON pt.paziente_id = p.id
-INNER JOIN medici m ON pt.medico_id = m.id
-INNER JOIN users u ON m.user_id = u.id
-WHERE pt.stato = 'ATTIVO';
 
 -- ============================================================
 -- VISTA: v_dashboard_statistiche
@@ -785,160 +576,66 @@ DROP VIEW IF EXISTS v_dashboard_kpi;
 CREATE VIEW v_dashboard_kpi AS
 SELECT
     -- ======== PAZIENTI ========
-    (SELECT COUNT(*)
-     FROM pazienti) AS totale_pazienti,
+    (SELECT COUNT(*) FROM pazienti) AS totale_pazienti,
 
-    (SELECT COUNT(*)
-     FROM pazienti
-     WHERE consenso_privacy = TRUE) AS pazienti_consenso_attivo,
+    (SELECT COUNT(*) FROM pazienti WHERE consenso_privacy = TRUE) AS pazienti_consenso_attivo,
 
-    (SELECT COUNT(DISTINCT paziente_id)
-     FROM percorsi_terapeutici
-     WHERE stato = 'ATTIVO') AS pazienti_in_terapia,
+    (SELECT COUNT(DISTINCT paziente_id) FROM percorsi_terapeutici WHERE stato = 'ATTIVO') AS pazienti_in_terapia,
 
-    (SELECT COUNT(*)
-     FROM pazienti
-     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 0 AND 5) AS pazienti_0_5_anni,
-
-    (SELECT COUNT(*)
-     FROM pazienti
-     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 6 AND 12) AS pazienti_6_12_anni,
-
-    (SELECT COUNT(*)
-     FROM pazienti
-     WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 13 AND 18) AS pazienti_13_18_anni,
+    (SELECT COUNT(*) FROM pazienti WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 0 AND 5) AS pazienti_0_5_anni,
+    (SELECT COUNT(*) FROM pazienti WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 6 AND 12) AS pazienti_6_12_anni,
+    (SELECT COUNT(*) FROM pazienti WHERE YEAR(CURDATE()) - YEAR(data_nascita) BETWEEN 13 AND 18) AS pazienti_13_18_anni,
 
     -- ======== TUTORI ========
-    (SELECT COUNT(*)
-     FROM tutori_legali) AS totale_tutori,
+    (SELECT COUNT(*) FROM tutori_legali) AS totale_tutori,
 
     -- ======== SPECIALISTI ========
-    (SELECT COUNT(*)
-     FROM medici
-     WHERE is_disponibile = TRUE) AS medici_disponibili,
-
-    (SELECT COUNT(*)
-     FROM medici
-     WHERE is_verificato = TRUE) AS medici_verificati,
-
-    (SELECT COUNT(*)
-     FROM medici m
-     JOIN users u ON m.user_id = u.id
-     WHERE u.is_active = TRUE) AS medici_attivi,
-
-    (SELECT COUNT(*)
-     FROM medici
-     WHERE specializzazione LIKE '%Neuropsichiatra%') AS neuropsichiatri,
-
-    (SELECT COUNT(*)
-     FROM medici
-     WHERE specializzazione LIKE '%Psicologo%') AS psicologi,
-
-    (SELECT COUNT(*)
-     FROM medici
-     WHERE specializzazione LIKE '%Logopedista%') AS logopedisti,
+    (SELECT COUNT(*) FROM medici WHERE is_disponibile = TRUE) AS medici_disponibili,
+    (SELECT COUNT(*) FROM medici WHERE is_verificato = TRUE) AS medici_verificati,
+    (SELECT COUNT(*) FROM medici m JOIN users u ON m.user_id = u.id WHERE u.is_active = TRUE) AS medici_attivi,
+    (SELECT COUNT(*) FROM medici WHERE specializzazione LIKE '%Neuropsichiatra%') AS neuropsichiatri,
+    (SELECT COUNT(*) FROM medici WHERE specializzazione LIKE '%Psicologo%') AS psicologi,
+    (SELECT COUNT(*) FROM medici WHERE specializzazione LIKE '%Logopedista%') AS logopedisti,
 
     -- ======== PRENOTAZIONI OGGI ========
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE DATE(data_ora) = CURDATE()) AS prenotazioni_oggi,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE DATE(data_ora) = CURDATE()
-     AND stato = 'CONFERMATA') AS prenotazioni_oggi_confermate,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE DATE(data_ora) = CURDATE()
-     AND stato = 'COMPLETATA') AS prenotazioni_oggi_completate,
+    (SELECT COUNT(*) FROM prenotazioni WHERE DATE(data_ora) = CURDATE()) AS prenotazioni_oggi,
+    (SELECT COUNT(*) FROM prenotazioni WHERE DATE(data_ora) = CURDATE() AND stato = 'CONFERMATA') AS prenotazioni_oggi_confermate,
+    (SELECT COUNT(*) FROM prenotazioni WHERE DATE(data_ora) = CURDATE() AND stato = 'COMPLETATA') AS prenotazioni_oggi_completate,
 
     -- ======== PRENOTAZIONI SETTIMANA ========
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE data_ora >= CURDATE()
-     AND data_ora < DATE_ADD(CURDATE(), INTERVAL 7 DAY)) AS prenotazioni_prossimi_7_giorni,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE YEARWEEK(data_ora, 1) = YEARWEEK(CURDATE(), 1)) AS prenotazioni_questa_settimana,
+    (SELECT COUNT(*) FROM prenotazioni WHERE data_ora >= CURDATE() AND data_ora < DATE_ADD(CURDATE(), INTERVAL 7 DAY)) AS prenotazioni_prossimi_7_giorni,
+    (SELECT COUNT(*) FROM prenotazioni WHERE YEARWEEK(data_ora, 1) = YEARWEEK(CURDATE(), 1)) AS prenotazioni_questa_settimana,
 
     -- ======== PRENOTAZIONI MESE ========
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE YEAR(data_ora) = YEAR(CURDATE())
-     AND MONTH(data_ora) = MONTH(CURDATE())) AS prenotazioni_questo_mese,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE YEAR(data_ora) = YEAR(CURDATE())
-     AND MONTH(data_ora) = MONTH(CURDATE())
-     AND stato = 'COMPLETATA') AS prenotazioni_completate_mese,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE stato = 'IN_ATTESA') AS prenotazioni_da_confermare,
-
-    (SELECT COUNT(*)
-     FROM prenotazioni
-     WHERE stato = 'ANNULLATA'
-     AND MONTH(data_annullamento) = MONTH(CURDATE())) AS prenotazioni_annullate_mese,
+    (SELECT COUNT(*) FROM prenotazioni WHERE YEAR(data_ora) = YEAR(CURDATE()) AND MONTH(data_ora) = MONTH(CURDATE())) AS prenotazioni_questo_mese,
+    (SELECT COUNT(*) FROM prenotazioni WHERE YEAR(data_ora) = YEAR(CURDATE()) AND MONTH(data_ora) = MONTH(CURDATE()) AND stato = 'COMPLETATA') AS prenotazioni_completate_mese,
+    (SELECT COUNT(*) FROM prenotazioni WHERE stato = 'IN_ATTESA') AS prenotazioni_da_confermare,
+    (SELECT COUNT(*) FROM prenotazioni WHERE stato = 'ANNULLATA' AND MONTH(data_annullamento) = MONTH(CURDATE())) AS prenotazioni_annullate_mese,
 
     -- ======== PERCORSI TERAPEUTICI ========
-    (SELECT COUNT(*)
-     FROM percorsi_terapeutici
-     WHERE stato = 'ATTIVO') AS percorsi_attivi,
-
-    (SELECT COUNT(*)
-     FROM percorsi_terapeutici
-     WHERE stato = 'IN_VALUTAZIONE') AS percorsi_in_valutazione,
-
-    (SELECT COUNT(*)
-     FROM percorsi_terapeutici
-     WHERE stato = 'SOSPESO') AS percorsi_sospesi,
-
+    (SELECT COUNT(*) FROM percorsi_terapeutici WHERE stato = 'ATTIVO') AS percorsi_attivi,
+    -- FIX: stato non esiste nel DDL, sostituito con SOSPESO o rimuovi se non serve
+    (SELECT COUNT(*) FROM percorsi_terapeutici WHERE stato = 'SOSPESO') AS percorsi_sospesi,
+    (SELECT COUNT(*) FROM percorsi_terapeutici WHERE stato = 'CONCLUSO') AS percorsi_conclusi,
 
     -- ======== REFERTI ========
-    (SELECT COUNT(*)
-     FROM referti
-     WHERE YEAR(data_emissione) = YEAR(CURDATE())
-     AND MONTH(data_emissione) = MONTH(CURDATE())) AS referti_emessi_mese,
-
-    (SELECT COUNT(*)
-     FROM referti
-     WHERE is_firmato = FALSE) AS referti_da_firmare,
-
-    (SELECT COUNT(*)
-     FROM referti
-     WHERE is_inviato_paziente = FALSE) AS referti_da_inviare,
+    (SELECT COUNT(*) FROM referti WHERE YEAR(data_emissione) = YEAR(CURDATE()) AND MONTH(data_emissione) = MONTH(CURDATE())) AS referti_emessi_mese,
+    (SELECT COUNT(*) FROM referti WHERE is_firmato = FALSE) AS referti_da_firmare,
+    (SELECT COUNT(*) FROM referti WHERE is_inviato_paziente = FALSE) AS referti_da_inviare,
 
     -- ======== NOTIFICHE ========
-    (SELECT COUNT(*)
-     FROM notifiche
-     WHERE is_letta = FALSE) AS notifiche_non_lette,
-
-    (SELECT COUNT(*)
-     FROM notifiche
-     WHERE DATE(created_at) = CURDATE()) AS notifiche_oggi,
+    (SELECT COUNT(*) FROM notifiche WHERE is_letta = FALSE) AS notifiche_non_lette,
+    (SELECT COUNT(*) FROM notifiche WHERE DATE(created_at) = CURDATE()) AS notifiche_oggi,
 
     -- ======== STATISTICHE MEDIE ========
-    (SELECT COALESCE(AVG(rating_medio), 0)
-     FROM medici
-     WHERE numero_recensioni > 0) AS rating_medio_medici,
+    (SELECT COALESCE(AVG(rating_medio), 0) FROM medici WHERE numero_recensioni > 0) AS rating_medio_medici,
+    (SELECT COALESCE(AVG(numero_sedute_effettuate), 0) FROM percorsi_terapeutici WHERE stato = 'ATTIVO') AS media_sedute_per_percorso,
 
-    (SELECT COALESCE(AVG(numero_sedute_effettuate), 0)
-     FROM percorsi_terapeutici
-     WHERE stato = 'ATTIVO') AS media_sedute_per_percorso,
+    -- ======== TREND (FIX: due subquery scalari separate) ========
+    (
+        (SELECT COUNT(*) FROM prenotazioni WHERE YEAR(data_ora) = YEAR(CURDATE()) AND MONTH(data_ora) = MONTH(CURDATE()))
+        -
+        (SELECT COUNT(*) FROM prenotazioni WHERE YEAR(data_ora) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND MONTH(data_ora) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)))
+    ) AS trend_prenotazioni_mese,
 
-    -- ======== TREND (confronto con mese scorso) ========
-    (SELECT COUNT(*) - (
-        SELECT COUNT(*)
-        FROM prenotazioni
-        WHERE YEAR(data_ora) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
-        AND MONTH(data_ora) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
-    ) FROM prenotazioni
-     WHERE YEAR(data_ora) = YEAR(CURDATE())
-     AND MONTH(data_ora) = MONTH(CURDATE())) AS trend_prenotazioni_mese,
-
-    -- ======== TIMESTAMP AGGIORNAMENTO ========
     NOW() AS ultimo_aggiornamento;

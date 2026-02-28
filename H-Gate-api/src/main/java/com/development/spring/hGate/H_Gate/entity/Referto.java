@@ -101,10 +101,6 @@ public class Referto extends BasicEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relazioni
-    @OneToMany(mappedBy = "referto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Allegato> allegati = new ArrayList<>();
-
     @PrePersist
     protected void onCreate() {
         if (uuid == null) {

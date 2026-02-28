@@ -113,9 +113,8 @@ public class Prenotazione extends BasicEntity {
     @JsonIgnore
     private Referto referto;
 
-    @OneToOne(mappedBy = "prenotazione", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Recensione recensione;
+    @OneToMany(mappedBy = "prenotazione", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Allegato> allegati = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

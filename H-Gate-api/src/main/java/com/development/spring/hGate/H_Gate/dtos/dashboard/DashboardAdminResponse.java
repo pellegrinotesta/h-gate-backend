@@ -18,7 +18,6 @@ import java.util.List;
 public class DashboardAdminResponse {
     private KpiData kpi;
     private List<StatCard> stats;
-    private List<MedicoDaVerificare> mediciDaVerificare;
     private List<AttivitaRecente> attivitaRecenti;
 
     // ==================== KPI DATA ====================
@@ -59,7 +58,6 @@ public class DashboardAdminResponse {
 
         // Percorsi
         private Integer percorsiAttivi;
-        private Integer percorsiInValutazione;
         private Integer percorsiSospesi;
 
         // Referti
@@ -91,24 +89,6 @@ public class DashboardAdminResponse {
         private String color;
         private String change;
         private String trend;
-    }
-
-    // ==================== MEDICO DA VERIFICARE ====================
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MedicoDaVerificare {
-        private Integer id;
-        private String nome;
-        private String cognome;
-        private String email;
-        private String specializzazione;
-        private String numeroAlbo;
-        private String universita;
-        private Integer annoLaurea;
-        private LocalDateTime createdAt;
-        private Boolean hasDocuments;
     }
 
     // ==================== ATTIVITA RECENTE ====================

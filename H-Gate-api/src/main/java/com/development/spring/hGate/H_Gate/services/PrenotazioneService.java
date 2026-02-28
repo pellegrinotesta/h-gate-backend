@@ -93,12 +93,6 @@ public class PrenotazioneService extends BasicService {
             );
         }
 
-        boolean hasPrenotazioniOggi = prenotazioneRepository.existsByPazienteIdAndDataOraBetween(paziente.getId(), dataOra.toLocalDate().atStartOfDay(), dataOra.toLocalDate().atTime(23,59,59));
-
-        if(hasPrenotazioniOggi) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Hai già una prenotazione per questo paziente in questo giorno");
-        }
-
         BigDecimal costo = tariffeMediciRepository.findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita()).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Tariffa non configurata"
@@ -183,46 +177,59 @@ public class PrenotazioneService extends BasicService {
     @Transactional
     public Prenotazione completaPrenotazione(Integer medicoUserId, Integer prenotazioneId) {
 
-        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                PRENOTAZIONE_NOT_FOUND
-        ));
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
 
         Medico medico = medicoRepository.findMedicoByUserId(medicoUserId);
 
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate dataVisita = prenotazione.getDataOra().toLocalDate();
+        LocalDate oggi = now.toLocalDate();
+
+        // Non completabile prima del giorno della visita
+        if (oggi.isBefore(dataVisita)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Non puoi completare una visita non ancora avvenuta");
+        }
+
+        // Non completabile dopo 7 giorni
+        if (oggi.isAfter(dataVisita.plusDays(7))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Non puoi completare una visita avvenuta più di 7 giorni fa");
+        }
+
         if (!prenotazione.getMedico().getId().equals(medico.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Non sei autorizzato a completare questa prenotazione"
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Non sei autorizzato a completare questa prenotazione");
         }
 
         if (prenotazione.getStato() != StatoPrenotazioneEnum.CONFERMATA) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Questa prenotazione non è in attesa di completamentp"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Questa prenotazione non è in attesa di completamento");
+        }
+
+        // ← Controllo data di fine
+        if (prenotazione.getDataOraFine() != null &&
+                LocalDateTime.now().isBefore(prenotazione.getDataOraFine())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La prenotazione non può essere completata prima della fine della visita");
         }
 
         prenotazione.setStato(StatoPrenotazioneEnum.COMPLETATA);
         prenotazione.setConfermaInviata(true);
 
-        prenotazione = prenotazioneRepository.save(prenotazione);
-
-        return prenotazione;
+        return prenotazioneRepository.save(prenotazione);
     }
 
 
     @Transactional
     public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {
 
-        // Verifica che la prenotazione esista
         Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Prenotazione non trovata"
                 ));
 
-        // Verifica che il tutore sia autorizzato
         TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
                         "Tutore non trovato"
@@ -235,7 +242,6 @@ public class PrenotazioneService extends BasicService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non sei autorizzato ad annullare questa prenotazione");
         }
 
-        // Verifica che la prenotazione non sia già completata o annullata
         if (prenotazione.getStato() == StatoPrenotazioneEnum.COMPLETATA) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

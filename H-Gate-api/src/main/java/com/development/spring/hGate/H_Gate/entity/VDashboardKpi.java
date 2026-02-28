@@ -97,9 +97,6 @@ public class VDashboardKpi implements IdentifiableEntity<LocalDateTime> {
     @Column(name = "percorsi_attivi")
     private Integer percorsiAttivi;
 
-    @Column(name = "percorsi_in_valutazione")
-    private Integer percorsiInValutazione;
-
     @Column(name = "percorsi_sospesi")
     private Integer percorsiSospesi;
 

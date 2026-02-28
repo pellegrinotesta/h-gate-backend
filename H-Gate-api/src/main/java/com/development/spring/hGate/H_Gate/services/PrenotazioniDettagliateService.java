@@ -11,6 +11,7 @@ import com.development.spring.hGate.H_Gate.libs.utils.ComparableWrapper;
 import com.development.spring.hGate.H_Gate.libs.utils.Pair;
 import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import com.development.spring.hGate.H_Gate.mappers.PrenotazioneDettagliateMapper;
+import com.development.spring.hGate.H_Gate.repositories.PazienteTutoreRepository;
 import com.development.spring.hGate.H_Gate.repositories.PrenotazioniDettagliateRepository;
 import com.development.spring.hGate.H_Gate.repositories.RefertoRepository;
 import com.development.spring.hGate.H_Gate.shared.services.BasicService;
@@ -41,6 +42,7 @@ public class PrenotazioniDettagliateService extends BasicService {
     private final RefertoRepository refertoRepository;
     private final PrenotazioneSpecificationsFactory prenotazioneSpecificationsFactory;
     private final PrenotazioneDettagliateMapper prenotazioneDettagliateMapper;
+    private final PazienteTutoreRepository pazienteTutoreRepository;
 
     private final Map<String, Function<VPrenotazioniDettagliate, ComparableWrapper>> sortingFields = new HashMap<>() {{
         put("numeroPrenotazione", prenotazioniDettagliate -> prenotazioniDettagliate.getNumeroPrenotazione() != null ? new ComparableWrapper(prenotazioniDettagliate.getNumeroPrenotazione()) : null);
@@ -59,8 +61,10 @@ public class PrenotazioniDettagliateService extends BasicService {
             Optional<Filter<VPrenotazioniDettagliate>> filter,
             Pageable pageable, Integer userId) {
         try {
-            Specification<VPrenotazioniDettagliate> tutoreSpec = ((root, query, cb) -> cb.equal(root.get("tutoreUserId"), userId));
+            List<Integer> pazienteIds = pazienteTutoreRepository.findPazienteIdsByTutoreUserId(userId);
 
+            Specification<VPrenotazioniDettagliate> tutoreSpec = (root, query, cb) ->
+                    root.get("pazienteId").in(pazienteIds);
             Specification<VPrenotazioniDettagliate> finalSpec = filter.map(f -> getSpecificationForAdvancedSearch(f).and(tutoreSpec)).orElse(tutoreSpec);
 
             Pair<Boolean, String> sortingInfo = isSortedOnNonDirectlyMappedField(sortingFields, pageable);

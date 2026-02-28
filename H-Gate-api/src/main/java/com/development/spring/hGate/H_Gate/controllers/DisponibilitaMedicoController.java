@@ -92,7 +92,7 @@ public class DisponibilitaMedicoController {
         return res;
     }
 
-    @PostMapping("/standard")
+    @PutMapping("/standard")
     public ResponseDTO<List<DisponibilitaMediciDTO>> configuraStandard(JwtAuthentication authentication) {
         ResponseDTO<List<DisponibilitaMediciDTO>> res = new ResponseDTO<>();
         try {
@@ -106,18 +106,5 @@ public class DisponibilitaMedicoController {
 
         return res;
     }
-//    @GetMapping("/{medicoUserId}")
-//    public ResponseDTO<List<DisponibilitaMediciDTO>> findByMedicoUserId(@PathVariable Integer medicoUserId) {
-//        ResponseDTO<List<DisponibilitaMediciDTO>> res = new ResponseDTO<>();
-//
-//        try {
-//            res.setOk(true);
-//            res.setData(disponibilitaMediciIMapper.convertModelsToDtos(disponibilitaMediciService.findByMedicoUserId(medicoUserId)));
-//        } catch (Exception ex) {
-//            res.setOk(false);
-//            res.setMessage(ex.getMessage());
-//        }
-//
-//        return res;
-//    }
+
 }

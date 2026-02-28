@@ -233,11 +233,11 @@ VALUES
 
 
 INSERT INTO percorsi_terapeutici
-(paziente_id, medico_id, titolo, obiettivi, numero_sedute_previste)
+(paziente_id, medico_user_id, titolo, obiettivi, numero_sedute_previste)
 VALUES
 (
  (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
- (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
+ (SELECT user_id FROM medici WHERE numero_albo = 'RM12345'),
  'Percorso ADHD',
  'Migliorare attenzione e regolazione emotiva',
  12

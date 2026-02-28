@@ -62,7 +62,7 @@ public class PrenotazioneController {
        return res;
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/{id}/annulla")
     @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<String> annullaPrenotazione(JwtAuthentication jwtAuthentication, @PathVariable Integer id, @Valid @RequestBody PrenotazioneAnnullaDTO dto) {
 

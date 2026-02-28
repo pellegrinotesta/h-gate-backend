@@ -42,6 +42,7 @@ public interface PrenotazioniDettagliateRepository extends CrudRepository<VPreno
             "WHERE v.tutoreUserId = :tutoreUserId")
     Integer countByTutoreUserId(@Param("tutoreUserId") Integer tutoreUserId);
 
+
     // MEDICO - Visite oggi
     @Query("SELECT COUNT(v) FROM VPrenotazioniDettagliate v " +
             "WHERE v.medicoUserId = :medicoUserId " +
@@ -68,18 +69,6 @@ public interface PrenotazioniDettagliateRepository extends CrudRepository<VPreno
             @Param("stato") String stato
     );
 
-    // MEDICO - Appuntamenti di oggi
-    @Query("SELECT v FROM VPrenotazioniDettagliate v " +
-            "WHERE v.medicoUserId = :medicoUserId " +
-            "AND v.dataOra BETWEEN :startOfDay AND :endOfDay " +
-            "AND v.stato IN :stati " +
-            "ORDER BY v.dataOra ASC")
-    List<VPrenotazioniDettagliate> findByMedicoUserIdAndDataOraBetweenAndStatoInOrderByDataOraAsc(
-            @Param("medicoUserId") Integer medicoUserId,
-            @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay,
-            @Param("stati") List<String> stati
-    );
 
     @Query("SELECT v FROM VPrenotazioniDettagliate v " +
             "WHERE v.medicoUserId = :medicoUserId " +

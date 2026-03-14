@@ -70,7 +70,6 @@ public class DashboardService extends BasicService {
                 .refertiDaFirmare(prenotazioniDettagliateService.refertiDaFirmare(medicoUserId))
                 .refertiDaCompletare(prenotazioniDettagliateService.refertiDaCompletare(medicoUserId))
                 .ratingMedio(medico.getRatingMedio())
-                .numeroRecensioni(medico.getNumeroRecensioni())
                 .appuntamentiOggi(prenotazioniDettagliateService.appuntamentiOggi(medicoUserId))
                 .build();
     }

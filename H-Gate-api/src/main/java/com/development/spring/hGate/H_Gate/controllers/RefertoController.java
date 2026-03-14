@@ -62,8 +62,8 @@ public class RefertoController {
     public ResponseDTO<List<RefertoDTO>> listaRefertiPaziente(@PathVariable("pazienteId") Integer pazienteId) {
         ResponseDTO<List<RefertoDTO>> res = new ResponseDTO<>();
         try {
-             res.setOk(true);
-             res.setData(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)));
+            res.setOk(true);
+            res.setData(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)));
         } catch (Exception ex) {
             res.setOk(false);
             res.setMessage(ex.getMessage());

@@ -48,28 +48,19 @@ CREATE TABLE `medici` (
     `anno_laurea` INT NULL,
     `bio` TEXT NULL,
     `curriculum` TEXT NULL,
-    `orari_disponibilita` JSON NULL,
     `durata_visita_minuti` INT DEFAULT 30,
     `pausa_tra_visite_minuti` INT DEFAULT 5,
-    `anticipo_prenotazione_giorni` INT DEFAULT 30,
     `is_disponibile` BOOLEAN DEFAULT TRUE,
-    `is_verificato` BOOLEAN DEFAULT FALSE,
-    `data_verifica` DATETIME NULL,
-    `verificato_da` INT NULL,
     `rating_medio` DECIMAL(3,2) DEFAULT 0.00,
-    `numero_recensioni` INT DEFAULT 0,
-    `numero_pazienti` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`verificato_da`) REFERENCES `users`(`id`) ON DELETE SET NULL,
 
     INDEX `idx_specializzazione` (`specializzazione`),
     INDEX `idx_numero_albo` (`numero_albo`),
     INDEX `idx_is_disponibile` (`is_disponibile`),
     INDEX `idx_rating` (`rating_medio` DESC),
-    INDEX `idx_verificato` (`is_verificato`),
 
     CHECK (`rating_medio` BETWEEN 0 AND 5),
     CHECK (`durata_visita_minuti` BETWEEN 10 AND 120)
@@ -170,21 +161,6 @@ CREATE TABLE valutazioni_psicologiche (
 
     FOREIGN KEY (paziente_id) REFERENCES pazienti(id) ON DELETE CASCADE,
     FOREIGN KEY (medico_user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE `amministratori` (
-    `id` INT PRIMARY KEY AUTO_INCREMENT,
-    `user_id` INT NOT NULL,
-    `livello_accesso` INT DEFAULT 1,
-    `dipartimento` VARCHAR(100) NULL,
-    `permessi` JSON NULL,
-    `note` TEXT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-
-    CHECK (`livello_accesso` BETWEEN 1 AND 10)
 );
 
 CREATE TABLE `prenotazioni` (
@@ -294,33 +270,6 @@ CREATE TABLE `allegati` (
     CHECK (`size_bytes` <= 10485760)
 );
 
-CREATE TABLE `recensioni` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `prenotazione_id` INT UNIQUE NOT NULL,
-    `paziente_id` INT NOT NULL,
-    `medico_id` INT NOT NULL,
-    `rating` INT NOT NULL,
-    `titolo` VARCHAR(200) NULL,
-    `commento` TEXT NULL,
-    `is_anonima` BOOLEAN DEFAULT FALSE,
-    `is_verificata` BOOLEAN DEFAULT FALSE,
-    `is_pubblicata` BOOLEAN DEFAULT TRUE,
-    `risposta_medico` TEXT NULL,
-    `data_risposta` DATETIME NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (`prenotazione_id`) REFERENCES `prenotazioni`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`paziente_id`) REFERENCES `pazienti`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`medico_id`) REFERENCES `medici`(`id`) ON DELETE CASCADE,
-
-    INDEX `idx_paziente` (`paziente_id`),
-    INDEX `idx_medico` (`medico_id`),
-    INDEX `idx_rating` (`rating`),
-    INDEX `idx_pubblicata` (`is_pubblicata`),
-
-    CHECK (`rating` BETWEEN 1 AND 5)
-);
 
 CREATE TABLE `notifiche` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -628,7 +577,6 @@ SELECT
     (SELECT COUNT(*) FROM notifiche WHERE DATE(created_at) = CURDATE()) AS notifiche_oggi,
 
     -- ======== STATISTICHE MEDIE ========
-    (SELECT COALESCE(AVG(rating_medio), 0) FROM medici WHERE numero_recensioni > 0) AS rating_medio_medici,
     (SELECT COALESCE(AVG(numero_sedute_effettuate), 0) FROM percorsi_terapeutici WHERE stato = 'ATTIVO') AS media_sedute_per_percorso,
 
     -- ======== TREND (FIX: due subquery scalari separate) ========

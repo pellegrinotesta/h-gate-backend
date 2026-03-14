@@ -218,20 +218,6 @@ VALUES
 ((SELECT id FROM medici WHERE numero_albo = 'MI11223'), 5, '09:00', '13:00');
 
 
-INSERT INTO recensioni
-(prenotazione_id, paziente_id, medico_id, rating, titolo, commento, is_verificata)
-VALUES
-(
- (SELECT id FROM prenotazioni WHERE numero_prenotazione = 'NPI20250115001'),
- (SELECT id FROM pazienti WHERE codice_fiscale = 'VRDMRC15A15F205X'),
- (SELECT id FROM medici WHERE numero_albo = 'RM12345'),
- 5,
- 'Professionista eccellente',
- 'Molto attento e chiaro nelle spiegazioni.',
- TRUE
-);
-
-
 INSERT INTO percorsi_terapeutici
 (paziente_id, medico_user_id, titolo, obiettivi, numero_sedute_previste)
 VALUES
@@ -242,8 +228,6 @@ VALUES
  'Migliorare attenzione e regolazione emotiva',
  12
 );
-
-
 
 -- ============================================================
 -- RIEPILOGO DATI INSERITI

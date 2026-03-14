@@ -47,17 +47,11 @@ public class Medico extends BasicEntity {
     @Column(columnDefinition = "TEXT")
     private String curriculum;
 
-    @Column(name = "orari_disponibilita", columnDefinition = "JSON")
-    private String orariDisponibilita;
-
     @Column(name = "durata_visita_minuti")
     private Integer durataVisitaMinuti = 30;
 
     @Column(name = "pausa_tra_visite_minuti")
     private Integer pausaTraVisiteMinuti = 5;
-
-    @Column(name = "anticipo_prenotazione_giorni")
-    private Integer anticipoPrenotazioneGiorni = 30;
 
     @Column(name = "is_disponibile")
     private Boolean isDisponibile = true;
@@ -65,23 +59,10 @@ public class Medico extends BasicEntity {
     @Column(name = "is_verificato")
     private Boolean isVerificato = false;
 
-    @Column(name = "data_verifica")
-    private LocalDateTime dataVerifica;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "verificato_da")
-    private Users verificatoDa;
-
     @Column(name = "rating_medio", precision = 3, scale = 2)
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     private BigDecimal ratingMedio = BigDecimal.ZERO;
-
-    @Column(name = "numero_recensioni")
-    private Integer numeroRecensioni = 0;
-
-    @Column(name = "numero_pazienti")
-    private Integer numeroPazienti = 0;
 
     // Relazioni
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
@@ -96,8 +77,5 @@ public class Medico extends BasicEntity {
     @JsonIgnore
     private List<DisponibilitaMedico> disponibilita = new ArrayList<>();
 
-    @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<Recensione> recensioni = new ArrayList<>();
 
 }

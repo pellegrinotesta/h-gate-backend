@@ -5,7 +5,7 @@ server:
 
 jasypt:
   encryptor:
-    password: 51kqFFT4Gmac2TSWT8k51Q
+    password: ${JASYPT_PASSWORD}
 
 spring:
   application:
@@ -18,8 +18,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: smtpmail587sender@gmail.com
-    password: ENC(486o42WzBDVoPxAL9SNlEk79EerQXxwIcloTraocr/FYbO4gQ0HEmDieYwgbqQbO8hPQ6w5auXFddtq1bhR17g==)
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -46,7 +46,7 @@ app:
 
 application:
   jwt:
-    secretKey: dsalkjdjkfjklafojlkas7jklfjkadlnjfanjfnjkladsjklfjlkaenklfankljodsaf0ji
-    cryptoKey: Qs23RBNF330ms00n
+    secretKey: ${JWT_SECRET_KEY}
+    cryptoKey: ${JWT_CRYPTO_KEY}
     tokenDurationMs: 1800000
     tokenRenewBeforeExpirationMs: 1800000

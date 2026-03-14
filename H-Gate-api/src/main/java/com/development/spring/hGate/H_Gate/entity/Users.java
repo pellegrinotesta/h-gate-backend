@@ -75,15 +75,6 @@ public class Users extends BasicEntity {
     @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Column(name = "verification_token")
-    private String verificationToken;
-
-    @Column(name = "reset_password_token")
-    private String resetPasswordToken;
-
-    @Column(name = "reset_password_expires")
-    private LocalDateTime resetPasswordExpires;
-
     @Column(name = "ultimo_accesso")
     private Date ultimoAccesso;
 

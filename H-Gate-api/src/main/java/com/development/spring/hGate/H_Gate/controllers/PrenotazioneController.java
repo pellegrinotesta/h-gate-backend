@@ -19,11 +19,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -69,7 +67,7 @@ public class PrenotazioneController {
 
     @Operation(summary = "Annulla prenotazione", description = "Permette al tutore di annullare una prenotazione esistente specificando il motivo.")
     @PutMapping("/{id}/annulla")
-    @PreAuthorize("hasAuthority('TUTORE')")
+    @PreAuthorize("hasAnyAuthority('TUTORE', 'MEDICO')")
     public ResponseDTO<String> annullaPrenotazione(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID della prenotazione") @PathVariable Integer id,

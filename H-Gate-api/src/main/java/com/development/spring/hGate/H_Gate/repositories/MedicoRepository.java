@@ -19,8 +19,7 @@ public interface MedicoRepository extends CrudRepository<Medico, Integer> {
     @Query("""
         SELECT m FROM Medico m
         JOIN FETCH m.user u
-        WHERE m.isVerificato = false
-          AND u.isActive = true
+        WHERE u.isActive = true
     """)
     List<Medico> findMediciDaVerificare();
 

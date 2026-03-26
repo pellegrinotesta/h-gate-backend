@@ -206,6 +206,7 @@ public class PrenotazioniDettagliateService extends BasicService {
                 .stato(v.getStato())
                 .costo(v.getCosto())
                 .paziente(PrenotazioneDTO.PazienteMinDTO.builder()
+                        .id(v.getPazienteId())
                         .nome(v.getPazienteNome())
                         .cognome(v.getPazienteCognome())
                         .codiceFiscale(v.getPazienteCf())

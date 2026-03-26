@@ -54,6 +54,8 @@ public class PrenotazioneDTO {
     @AllArgsConstructor
     public static class PazienteMinDTO {
 
+        private Long id;
+
         @NotBlank(message = "Il nome è obbligatorio")
         private String nome;
 

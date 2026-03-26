@@ -41,13 +41,8 @@ public class RegistrationController {
             @Valid @RequestBody UserRegistrationDTO dto) {
         ResponseDTO<Users> res = new ResponseDTO<>();
 
-        try {
-            res.setOk(true);
-            res.setData(registrationService.registerUser(dto));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(registrationService.registerUser(dto));
 
         return res;
     }

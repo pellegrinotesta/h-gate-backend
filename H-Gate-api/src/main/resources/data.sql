@@ -46,19 +46,19 @@ VALUES
 -- 3. MEDICI
 -- ============================================================
 
-INSERT INTO `medici` (`user_id`, `specializzazione`, `numero_albo`, `universita`, `anno_laurea`, `bio`, `durata_visita_minuti`, `is_disponibile`, `is_verificato`, `rating_medio`, `numero_recensioni`)
+INSERT INTO `medici` (`user_id`, `specializzazione`, `numero_albo`, `universita`, `anno_laurea`, `bio`, `durata_visita_minuti`, `is_disponibile`,`rating_medio`)
 VALUES
 ((SELECT id FROM users WHERE email = 'mario.rossi@npi.it'),
  'Neuropsichiatria Infantile', 'RM12345', 'Sapienza Roma', 2005,
- 'Specialista in disturbi del neurosviluppo', 60, TRUE, TRUE, 4.8, 45),
+ 'Specialista in disturbi del neurosviluppo', 60, TRUE, 4.8),
 
 ((SELECT id FROM users WHERE email = 'laura.ferrari@npi.it'),
  'Psicologia Età Evolutiva', 'RM67890', 'Cattolica Milano', 2010,
- 'Psicologa esperta in CBT per bambini', 50, TRUE, TRUE, 4.9, 38),
+ 'Psicologa esperta in CBT per bambini', 50, TRUE, 4.9),
 
 ((SELECT id FROM users WHERE email = 'giulia.bianchi@npi.it'),
  'Logopedia', 'MI11223', 'Università Milano', 2012,
- 'Logopedista disturbi del linguaggio', 45, TRUE, TRUE, 4.7, 52);
+ 'Logopedista disturbi del linguaggio', 45, TRUE, 4.7);
 
 -- ============================================================
 -- 4. PAZIENTI

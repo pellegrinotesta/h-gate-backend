@@ -223,59 +223,57 @@ public class PrenotazioneService extends BasicService {
 
 
     @Transactional
-    public String annullaPrenotazione(Integer tutoreUserId, Integer prenotazioneId, String motivo) {
+    public String annullaPrenotazione(Integer userId, Integer prenotazioneId, String motivo) {
 
-        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Prenotazione non trovata"
-                ));
-
-        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.FORBIDDEN,
-                        "Tutore non trovato"
-                ));
-
-        boolean isAuthorized = pazienteTutoreRepository.existsByPazienteIdAndTutoreId(prenotazione.getPaziente().getId(), tutore.getId()
-                );
-
-        if (!isAuthorized) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non sei autorizzato ad annullare questa prenotazione");
-        }
+        Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prenotazione non trovata"));
 
         if (prenotazione.getStato() == StatoPrenotazioneEnum.COMPLETATA) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Non puoi annullare una prenotazione già completata"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Non puoi annullare una prenotazione già completata");
         }
 
         if (prenotazione.getStato() == StatoPrenotazioneEnum.ANNULLATA) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Prenotazione già annullata"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Prenotazione già annullata");
         }
 
-        // Verifica che non sia troppo tardi per annullare (es. meno di 24 ore)
-        LocalDateTime now = LocalDateTime.now();
-        if (prenotazione.getDataOra().isBefore(now.plusHours(24))) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Non puoi annullare una prenotazione a meno di 24 ore dall'appuntamento"
-            );
+        Users annullatoDa;
+
+        // Prova a trovare il medico
+        Medico medico = medicoRepository.findMedicoByUserId(userId);
+
+        if (medico != null && prenotazione.getMedico().getId().equals(medico.getId())) {
+            // È il medico della prenotazione
+            annullatoDa = medico.getUser();
+        } else {
+            // Deve essere il tutore
+            TutoreLegale tutore = tutoreLegaleRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Non autorizzato"));
+
+            boolean isAuthorized = pazienteTutoreRepository.existsByPazienteIdAndTutoreId(
+                    prenotazione.getPaziente().getId(), tutore.getId());
+
+            if (!isAuthorized) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non sei autorizzato ad annullare questa prenotazione");
+            }
+
+            // Vincolo 24 ore solo per il tutore
+            if (prenotazione.getDataOra().isBefore(LocalDateTime.now().plusHours(24))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Non puoi annullare una prenotazione a meno di 24 ore dall'appuntamento");
+            }
+
+            annullatoDa = tutore.getUser();
         }
 
-        // Annulla la prenotazione
         prenotazione.setStato(StatoPrenotazioneEnum.ANNULLATA);
         prenotazione.setMotivoAnnullamento(motivo);
-        prenotazione.setDataAnnullamento(now);
-        prenotazione.setAnnullataDa(tutore.getUser());
+        prenotazione.setDataAnnullamento(LocalDateTime.now());
+        prenotazione.setAnnullataDa(annullatoDa);
 
         prenotazioneRepository.save(prenotazione);
 
         return "Prenotazione annullata con successo";
     }
-
 
     private boolean verificaDisponibilitaSlot(Integer medicoId, LocalDateTime dataOra, LocalDateTime dataOraFine) {
         List<Prenotazione> conflitti = prenotazioneRepository.findConflittingAppointments(medicoId, dataOra, dataOraFine, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));

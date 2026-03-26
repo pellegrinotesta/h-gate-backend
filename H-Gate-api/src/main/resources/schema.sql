@@ -453,7 +453,6 @@ SELECT
 
     -- Specialisti
     (SELECT COUNT(*) FROM medici WHERE is_disponibile = TRUE) AS medici_disponibili,
-    (SELECT COUNT(*) FROM medici WHERE is_verificato = TRUE) AS medici_verificati,
 
     -- Tutori
     (SELECT COUNT(*) FROM tutori_legali) AS totale_tutori,
@@ -540,7 +539,6 @@ SELECT
 
     -- ======== SPECIALISTI ========
     (SELECT COUNT(*) FROM medici WHERE is_disponibile = TRUE) AS medici_disponibili,
-    (SELECT COUNT(*) FROM medici WHERE is_verificato = TRUE) AS medici_verificati,
     (SELECT COUNT(*) FROM medici m JOIN users u ON m.user_id = u.id WHERE u.is_active = TRUE) AS medici_attivi,
     (SELECT COUNT(*) FROM medici WHERE specializzazione LIKE '%Neuropsichiatra%') AS neuropsichiatri,
     (SELECT COUNT(*) FROM medici WHERE specializzazione LIKE '%Psicologo%') AS psicologi,

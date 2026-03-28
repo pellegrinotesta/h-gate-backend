@@ -15,7 +15,18 @@ Il design del database riflette la complessità del dominio:
 - Integrità referenziale garantita a livello di schema con Foreign Keys e Constraint.
 
 ## Configurazione Locale
-1. **Database:** Creare uno schema MySQL denominato `hgate_db`.
-2. **Environment:** Clonare il file `application-dev.properties` e configurare le proprie credenziali DB.
-3. **Build:** ```bash
-   ./mvnw clean install
+1. Impostare temporaneamente la modalità di inizializzazione su `always`:
+   ```yaml
+   spring:
+     sql:
+       init:
+         mode: always
+2. Avviare l'applicazione. Spring Boot eseguirà gli script SQL presenti nelle risorse.
+3. Importante: Una volta create le tabelle, riportare il valore a never per evitare tentativi di sovrascrittura ai riavvii successivi.
+
+## Variabili d'Ambiente
+Il backend richiede le seguenti variabili d'ambiente per il corretto funzionamento. Possono essere configurate nel sistema host, nell'IDE o tramite file .env:
+DB_URL: jdbc:mysql://localhost:3306/hgate_dbD
+B_USER: root
+DB_PASS: tua_password_db
+JWT_SECRET: stringa_alfanumerica_32_char

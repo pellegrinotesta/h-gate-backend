@@ -150,7 +150,7 @@ class ApprovazioniTest extends IntegrationTestBase {
         void registrazioneConMinoreNuovoAssociaSubito() throws Exception {
             registra("{\"email\":\"nuovo.genitore@test.it\",\"confirmPassword\":\"" + PASSWORD + "\",\"nome\":\"Giovanni\","
                     + "\"cognome\":\"Nuovo\",\"ruolo\":\"TUTORE\",\"minore\":{\"nome\":\"Pietro\",\"cognome\":\"Nuovo\","
-                    + "\"codiceFiscale\":\"NVOPTR15A01H501X\",\"relazione\":\"PADRE\"}}")
+                    + "\"codiceFiscale\":\"NVOPTR15A01H501X\",\"relazione\":\"PADRE\",\"consensoPrivacy\":true}}")
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value(containsString("Ora puoi accedere")));
             assertThat(richiestaRepository.countByStato(StatoRichiestaEnum.IN_ATTESA)).isZero();

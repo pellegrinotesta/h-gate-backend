@@ -95,14 +95,20 @@ public class AuditQueryService {
         List<AuditLog> righe = repository.findAll(spec,
                 PageRequest.of(0, Math.min(limite, MAX_PAGE_SIZE), Sort.by(Sort.Direction.DESC, "dataEvento", "id"))).getContent();
         Map<Integer, Users> utenti = utenti(righe);
-        return righe.stream().map(r -> AccessoPazienteDTO.builder()
+        return righe.stream().map(r -> {
+            // Il tentativo negato di un altro tutore non deve rivelare l'identità di un'altra famiglia
+            boolean anonimo = r.getEsito() != AuditLog.EsitoAudit.OK
+                    && (r.getRuoli() == null || (!r.getRuoli().contains("MEDICO") && !r.getRuoli().contains("ADMIN")));
+            return AccessoPazienteDTO.builder()
                 .dataEvento(r.getDataEvento())
-                .utente(Optional.ofNullable(utenti.get(r.getUserId())).map(u -> u.getNome() + " " + u.getCognome()).orElse(r.getUserEmail()))
-                .ruolo(ruoloLeggibile(r.getRuoli()))
+                .utente(anonimo ? "Utente non autorizzato"
+                        : Optional.ofNullable(utenti.get(r.getUserId())).map(u -> u.getNome() + " " + u.getCognome()).orElse(r.getUserEmail()))
+                .ruolo(anonimo ? "—" : ruoloLeggibile(r.getRuoli()))
                 .azione(r.getAzione())
                 .risorsaTipo(r.getRisorsaTipo())
                 .esito(r.getEsito())
-                .build()).toList();
+                .build();
+        }).toList();
     }
 
     private Map<Integer, Users> utenti(List<AuditLog> righe) {

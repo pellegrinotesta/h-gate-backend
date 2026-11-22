@@ -49,6 +49,10 @@ application:
     secretKey: ${JWT_SECRET_KEY}
     tokenDurationMs: 1800000
     tokenRenewBeforeExpirationMs: 1800000
+  privacy:
+    # Versione dell'informativa mostrata agli utenti. Quando cambia il testo dell'informativa,
+    # aggiornala: ai tutori verrà chiesto di prestare di nuovo il consenso.
+    versione-informativa: ${PRIVACY_VERSIONE_INFORMATIVA:2026-11}
   bootstrap:
     admin:
       email: ${ADMIN_EMAIL:}

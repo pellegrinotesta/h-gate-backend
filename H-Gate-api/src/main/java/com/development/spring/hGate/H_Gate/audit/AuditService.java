@@ -50,10 +50,18 @@ public class AuditService {
         }
     }
 
-    /** IP del client; dietro nginx arriva in X-Forwarded-For (impostato dal nostro proxy). */
+    /**
+     * IP del client. Dietro un proxy (nginx, Render) si usa l'ULTIMO valore di X-Forwarded-For,
+     * aggiunto dal proxy stesso: i valori precedenti arrivano dal client e possono essere falsificati.
+     * Se il backend fosse esposto direttamente senza proxy, anche questo header sarebbe falsificabile.
+     */
     public static String clientIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
-        String ip = (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : request.getRemoteAddr();
+        String ip = request.getRemoteAddr();
+        if (xff != null && !xff.isBlank()) {
+            String[] parti = xff.split(",");
+            ip = parti[parti.length - 1].trim();
+        }
         return troncato(ip, 45);
     }
 

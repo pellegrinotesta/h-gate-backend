@@ -83,5 +83,8 @@ public class PrenotazioneDTO {
         private String patologieCroniche;
         private String noteMediche;
         private String email;
+
+        /** Consenso esplicito al trattamento dei dati (informativa privacy). Obbligatorio per registrare un minore. */
+        private Boolean consensoPrivacy;
     }
 }

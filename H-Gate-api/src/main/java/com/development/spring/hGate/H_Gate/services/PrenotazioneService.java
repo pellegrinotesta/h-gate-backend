@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 public class PrenotazioneService extends BasicService {
 
     private final PrenotazioneRepository prenotazioneRepository;
+    private final ConsensoService consensoService;
     private final MedicoRepository medicoRepository;
     private final PazienteRepository pazienteRepository;
     private final TutoreLegaleRepository tutoreLegaleRepository;
@@ -71,6 +72,9 @@ public class PrenotazioneService extends BasicService {
         if(!isAuthorized) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, TUTORE_NOT_AUTHORIZED);
         }
+
+        // Nessuna nuova prenotazione se il consenso al trattamento dei dati è stato revocato
+        consensoService.verificaConsensoPerPrenotazione(paziente);
 
         Medico medico = medicoRepository.findById(dto.getMedicoId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MEDICO_NOT_FOUND));
 

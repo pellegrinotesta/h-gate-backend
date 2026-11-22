@@ -41,6 +41,7 @@ public class AllegatoService extends BasicService {
     private final AllegatoRepository allegatoRepository;
     private final PrenotazioneRepository prenotazioneRepository;
     private final MedicoRepository medicoRepository;
+    private final com.development.spring.hGate.H_Gate.repositories.UserRepository userRepository;
 
     /** Tipi ammessi: MIME dichiarato -> estensione e codice tipo_file salvati. */
     private static final Map<String, String[]> ALLOWED_TYPES = Map.of(
@@ -83,6 +84,7 @@ public class AllegatoService extends BasicService {
                     Files.copy(in, filePath);
                 }
                 scritti.add(filePath);
+                String hash = sha256(filePath);
 
                 Allegato allegato = Allegato.builder()
                         .uuid(UUID.randomUUID().toString())
@@ -92,6 +94,8 @@ public class AllegatoService extends BasicService {
                         .sizeBytes(file.getSize())
                         .url("/allegati/" + prenotazioneId + "/" + nomeFile)
                         .storagePath(filePath.toString())
+                        .hashFile(hash)
+                        .uploadedBy(caricatoDa())
                         .prenotazione(prenotazione)
                         .build();
 
@@ -128,6 +132,26 @@ public class AllegatoService extends BasicService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Il contenuto del file non corrisponde al tipo dichiarato: " + nome);
         }
+    }
+
+    static String sha256(Path file) {
+        try (InputStream in = Files.newInputStream(file)) {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+            return java.util.HexFormat.of().formatHex(md.digest());
+        } catch (IOException | java.security.NoSuchAlgorithmException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore nella lettura del file");
+        }
+    }
+
+    private com.development.spring.hGate.H_Gate.entity.Users caricatoDa() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthentication jwt && jwt.getId() != null) {
+            return userRepository.findById(jwt.getId()).orElse(null);
+        }
+        return null;
     }
 
     /** Controllo delle "magic bytes" iniziali del file. */
@@ -176,6 +200,12 @@ public class AllegatoService extends BasicService {
             }
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File non trovato");
+            // Integrità: il file su disco deve essere identico a quello caricato
+            if (allegato.getHashFile() != null && !allegato.getHashFile().equalsIgnoreCase(sha256(filePath))) {
+                logger.error("ALLEGATO {} ALTERATO O CORROTTO: hash diverso da quello registrato", allegato.getId());
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Il file risulta danneggiato o alterato: contatta la segreteria della clinica.");
+            }
             return resource;
         } catch (MalformedURLException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore nel download del file");

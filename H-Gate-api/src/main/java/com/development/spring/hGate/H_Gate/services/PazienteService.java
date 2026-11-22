@@ -42,6 +42,7 @@ public class PazienteService extends BasicService {
     private final TutoreLegaleRepository tutoreLegaleRepository;
     private final PazienteTutoreRepository pazienteTutoreRepository;
     private final ApprovazioniService approvazioniService;
+    private final ConsensoService consensoService;
     private final PazienteSpecificationsFactory pazienteSpecificationsFactory;
     private final PazienteMapper pazienteMapper;
 
@@ -113,6 +114,14 @@ public class PazienteService extends BasicService {
         return pazienteRepository.findByUserId(jwtAuthentication.getId());
     }
 
+    private static String clientIp() {
+        if (org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()
+                instanceof org.springframework.web.context.request.ServletRequestAttributes attrs) {
+            return com.development.spring.hGate.H_Gate.audit.AuditService.clientIp(attrs.getRequest());
+        }
+        return null;
+    }
+
     @Transactional
     public PazienteDTO addNewPaziente(JwtAuthentication jwtAuthentication, PrenotazioneDTO.PazienteMinDTO createDTO) {
         TutoreLegale tutore = tutoreLegaleRepository.findByUserId(jwtAuthentication.getId())
@@ -132,6 +141,9 @@ public class PazienteService extends BasicService {
         }
 
         if (isNewPaziente) {
+            if (!Boolean.TRUE.equals(createDTO.getConsensoPrivacy())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ConsensoService.MSG_CONSENSO_OBBLIGATORIO);
+            }
 
             paziente = new Paziente();
             paziente.setNome(createDTO.getNome());
@@ -139,7 +151,7 @@ public class PazienteService extends BasicService {
             paziente.setCodiceFiscale(createDTO.getCodiceFiscale());
             paziente.setDataNascita(createDTO.getDataNascita());
             paziente.setSesso(createDTO.getSesso());
-            paziente.setConsensoPrivacy(true);
+            paziente.setConsensoPrivacy(false); // impostato da consensoService.concedi()
             paziente.setAllergie(createDTO.getAllergie());
             paziente.setPatologieCroniche(createDTO.getPatologieCroniche());
             paziente.setPesoKg(createDTO.getPesoKg());
@@ -147,6 +159,7 @@ public class PazienteService extends BasicService {
 
 
             paziente = pazienteRepository.save(paziente);
+            consensoService.concedi(paziente, tutore.getUser(), clientIp());
         } else {
             PazienteTutoreId checkId = new PazienteTutoreId();
             checkId.setPazienteId(paziente.getId());

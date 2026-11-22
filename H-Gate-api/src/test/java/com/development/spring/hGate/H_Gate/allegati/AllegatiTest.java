@@ -65,6 +65,21 @@ class AllegatiTest extends IntegrationTestBase {
     }
 
     @Test
+    void hashRegistratoEFileAlteratoRilevato() throws Exception {
+        mvc.perform(multipart(url()).file(new MockMultipartFile("files", "a.pdf", "application/pdf", PDF))
+                .header("Authorization", bearer(tutoreAUser))).andExpect(status().isOk());
+        Allegato a = allegatoRepository.findByPrenotazioneId(prenotazioneA.getId()).get(0);
+        assertThat(a.getHashFile()).hasSize(64);
+        assertThat(a.getUploadedBy().getId()).isEqualTo(tutoreAUser.getId());
+
+        // Qualcuno modifica il file su disco
+        java.nio.file.Files.write(java.nio.file.Path.of(a.getStoragePath()), "%PDF-1.4 alterato".getBytes());
+        mvc.perform(get("/allegati/{id}/download", a.getId()).header("Authorization", bearer(tutoreAUser)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(containsString("alterato")));
+    }
+
+    @Test
     void tutoreNonCaricaSuPrenotazioniAltrui() throws Exception {
         mvc.perform(multipart(url()).file(new MockMultipartFile("files", "a.pdf", "application/pdf", PDF))
                         .header("Authorization", bearer(tutoreBUser)))

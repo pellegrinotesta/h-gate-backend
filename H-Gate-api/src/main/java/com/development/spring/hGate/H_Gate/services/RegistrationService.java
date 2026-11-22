@@ -31,6 +31,7 @@ public class RegistrationService extends BasicService {
     private final PasswordEncoder passwordEncoder;
     private final PazienteTutoreRepository pazienteTutoreRepository;
     private final ApprovazioniService approvazioniService;
+    private final ConsensoService consensoService;
 
     public static final String MSG_TUTORE_OK = "Registrazione completata. Ora puoi accedere.";
     public static final String MSG_TUTORE_IN_ATTESA =
@@ -70,6 +71,14 @@ public class RegistrationService extends BasicService {
         return new Esito(user, messaggio);
     }
 
+    private static String clientIp() {
+        if (org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()
+                instanceof org.springframework.web.context.request.ServletRequestAttributes attrs) {
+            return com.development.spring.hGate.H_Gate.audit.AuditService.clientIp(attrs.getRequest());
+        }
+        return null;
+    }
+
     private TutoreLegale createTutore(Users user) {
         TutoreLegale tutore = TutoreLegale.builder()
                 .user(user)
@@ -100,6 +109,9 @@ public class RegistrationService extends BasicService {
         }
 
         if (isNewPaziente) {
+            if (!Boolean.TRUE.equals(dto.getMinore().getConsensoPrivacy())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ConsensoService.MSG_CONSENSO_OBBLIGATORIO);
+            }
             // Crea nuovo paziente
             paziente = Paziente.builder()
                     .nome(dto.getMinore().getNome())
@@ -107,7 +119,8 @@ public class RegistrationService extends BasicService {
                     .codiceFiscale(dto.getMinore().getCodiceFiscale())
                     .dataNascita(dto.getMinore().getDataNascita())
                     .sesso(dto.getMinore().getSesso())
-                    .consensoPrivacy(true)
+                    // impostato da consensoService.concedi(), che registra anche lo storico
+                    .consensoPrivacy(false)
                     .allergie(dto.getMinore().getAllergie())
                     .patologieCroniche(dto.getMinore().getPatologieCroniche())
                     .pesoKg(dto.getMinore().getPesoKg())
@@ -117,6 +130,7 @@ public class RegistrationService extends BasicService {
                     .build();
 
             paziente = pazienteRepository.save(paziente);
+            consensoService.concedi(paziente, tutore.getUser(), clientIp());
         } else {
             // SICUREZZA: un nuovo account non può collegarsi da solo a un minore già registrato
             // (il codice fiscale non è un segreto): si crea una richiesta che la clinica verifica.
@@ -195,6 +209,14 @@ public class RegistrationService extends BasicService {
     }
 
     private void validateRegistration(UserRegistrationDTO dto) {
+        // Consenso privacy: verificato prima di salvare qualsiasi dato (solo per un minore nuovo;
+        // per un minore già registrato si crea una richiesta di associazione)
+        if ("TUTORE".equalsIgnoreCase(dto.getRuolo()) && dto.getMinore() != null
+                && dto.getMinore().getCodiceFiscale() != null
+                && pazienteRepository.findByCodiceFiscale(dto.getMinore().getCodiceFiscale()).isEmpty()
+                && !Boolean.TRUE.equals(dto.getMinore().getConsensoPrivacy())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ConsensoService.MSG_CONSENSO_OBBLIGATORIO);
+        }
         // Validazione email
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email già in uso");

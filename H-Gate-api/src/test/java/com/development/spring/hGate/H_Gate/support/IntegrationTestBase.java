@@ -136,6 +136,7 @@ public abstract class IntegrationTestBase {
                 .nome(nome).cognome(cognome).codiceFiscale(cf)
                 .dataNascita(Date.from(LocalDate.of(2015, 1, 1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
                 .sesso("M")
+                .consensoPrivacy(true)
                 .build());
     }
 

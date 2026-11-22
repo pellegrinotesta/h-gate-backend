@@ -52,7 +52,6 @@ public class MedicoService extends BasicService {
             Specification<Medico> attivi = (root, query, cb) -> {
                 query.distinct(true); // ← evita duplicati dalla join su user
                 return cb.and(
-                        cb.equal(root.get("isVerificato"), true),
                         cb.equal(root.get("isDisponibile"), true)
                 );
             };

@@ -56,8 +56,6 @@ public class Medico extends BasicEntity {
     @Column(name = "is_disponibile")
     private Boolean isDisponibile = true;
 
-    @Column(name = "is_verificato")
-    private Boolean isVerificato = false;
 
     @Column(name = "rating_medio", precision = 3, scale = 2)
     @DecimalMin("0.0")

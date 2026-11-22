@@ -46,7 +46,7 @@ VALUES
 -- 3. MEDICI
 -- ============================================================
 
-INSERT INTO `medici` (`user_id`, `specializzazione`, `numero_albo`, `universita`, `anno_laurea`, `bio`, `durata_visita_minuti`, `is_disponibile`, `rating_medio`)
+INSERT INTO `medici` (`user_id`, `specializzazione`, `numero_albo`, `universita`, `anno_laurea`, `bio`, `durata_visita_minuti`, `is_disponibile`,`rating_medio`)
 VALUES
 ((SELECT id FROM users WHERE email = 'mario.rossi@npi.it'),
  'Neuropsichiatria Infantile', 'RM12345', 'Sapienza Roma', 2005,

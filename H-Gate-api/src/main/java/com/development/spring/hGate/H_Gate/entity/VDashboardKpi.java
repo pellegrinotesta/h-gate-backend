@@ -50,9 +50,6 @@ public class VDashboardKpi implements IdentifiableEntity<LocalDateTime> {
     @Column(name = "medici_disponibili")
     private Integer mediciDisponibili;
 
-    @Column(name = "medici_verificati")
-    private Integer mediciVerificati;
-
     @Column(name = "medici_attivi")
     private Integer mediciAttivi;
 
@@ -118,8 +115,6 @@ public class VDashboardKpi implements IdentifiableEntity<LocalDateTime> {
     private Integer notificheOggi;
 
     // ==================== METRICHE ====================
-    @Column(name = "rating_medio_medici")
-    private BigDecimal ratingMedioMedici;
 
     @Column(name = "media_sedute_per_percorso")
     private BigDecimal mediaSedutePerPercorso;

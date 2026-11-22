@@ -31,7 +31,6 @@ public class MedicoDTO {
     private Integer pausaTraVisiteMinuti;
     private Integer anticipoPrenotazioneGiorni;
     private Boolean isDisponibile = true;
-    private Boolean isVerificato = false;
     private LocalDateTime dataVerifica;
     private UserDTO verificatoDa;
     private BigDecimal ratingMedio;

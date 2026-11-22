@@ -74,15 +74,12 @@ public class PrenotazioneScheduledService {
         log.info("=== INIZIO CANCELLAZIONE PRENOTAZIONI SCADUTE ===");
 
         LocalDateTime limite = LocalDateTime.now().minusHours(48);
-
         List<Prenotazione> prenotazioniScadute = prenotazioneRepository
                 .findByStatoAndCreatedAtBefore(
                         StatoPrenotazioneEnum.IN_ATTESA,
                         limite
                 );
-
         log.info("Trovate {} prenotazioni scadute da cancellare", prenotazioniScadute.size());
-
         int cancellate = 0;
         for (Prenotazione prenotazione : prenotazioniScadute) {
             try {
@@ -91,19 +88,15 @@ public class PrenotazioneScheduledService {
                         "Cancellazione automatica: non confermata dal medico entro 48 ore"
                 );
                 prenotazione.setDataAnnullamento(LocalDateTime.now());
-
                 prenotazioneRepository.save(prenotazione);
-
                 // Notifica al paziente
                 notificaService.notificaCancellazioneAutomatica(prenotazione);
-
                 cancellate++;
             } catch (Exception e) {
                 log.error("Errore cancellazione automatica prenotazione ID: {}",
                         prenotazione.getId(), e);
             }
         }
-
         log.info("=== COMPLETATA CANCELLAZIONE: {}/{} ===", cancellate, prenotazioniScadute.size());
     }
 

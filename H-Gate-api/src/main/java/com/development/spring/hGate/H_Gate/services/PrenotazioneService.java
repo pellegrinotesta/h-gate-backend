@@ -56,9 +56,11 @@ public class PrenotazioneService extends BasicService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Prenotazione creaPrenotazione(Integer tutoreUserId, PrenotazioneCreateDTO dto) {
-        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tutore non trovato"));
+        TutoreLegale tutore = tutoreLegaleRepository.findByUserId(tutoreUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Tutore non trovato"));
 
-        Paziente paziente = pazienteRepository.findById(dto.getPazienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PAZIENTE_NOT_FOUND));
+        Paziente paziente = pazienteRepository.findById(dto.getPazienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                PAZIENTE_NOT_FOUND));
 
         boolean isAuthorized = pazienteTutoreRepository.existsByPazienteIdAndTutoreId(paziente.getId(), tutore.getId());
 
@@ -93,14 +95,10 @@ public class PrenotazioneService extends BasicService {
             );
         }
 
-        BigDecimal costo = tariffeMediciRepository.findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita()).orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Tariffa non configurata"
-                ));
+        BigDecimal costo = tariffeMediciRepository.findCosto(dto.getMedicoId(), dto.getTipoVisita(), dto.isPrimaVisita()).orElseThrow(() -> new ResponseStatusException( HttpStatus.BAD_REQUEST,
+                "Tariffa non configurata"));
 
-        Prenotazione prenotazione = Prenotazione.builder()
-                .uuid(UUID.randomUUID().toString())
-                .numeroPrenotazione(generaNumeroPrenotazione())
+        Prenotazione prenotazione = Prenotazione.builder().uuid(UUID.randomUUID().toString()).numeroPrenotazione(generaNumeroPrenotazione())
                 .paziente(paziente)
                 .medico(medico)
                 .dataOra(dataOra)

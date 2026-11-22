@@ -1,7 +1,6 @@
 package com.development.spring.hGate.H_Gate.security.filters;
 
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
-import com.development.spring.hGate.H_Gate.security.services.CryptoService;
 import com.development.spring.hGate.H_Gate.security.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +22,6 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtService jwtService;
-
-    @Autowired
-    private CryptoService cryptoService;
 
     private Authentication buildAuthenticationToken(String jwt, HttpServletRequest request) {
         JwtAuthentication jwtAuthentication = jwtService.deserialize(jwt);
@@ -54,8 +50,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         final String authorizationHeader = request.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String encryptedJwt = authorizationHeader.substring(7);
-            String jwt = cryptoService.decrypt(encryptedJwt);
+            String jwt = authorizationHeader.substring(7).trim();
             if (isAuthenticationNeeded(jwt)) {
                 setAuthenticationInContext(buildAuthenticationToken(jwt, request));
             }

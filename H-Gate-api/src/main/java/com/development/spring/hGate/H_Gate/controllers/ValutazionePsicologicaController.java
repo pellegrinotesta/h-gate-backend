@@ -25,89 +25,65 @@ public class ValutazionePsicologicaController {
 
     @Operation(summary = "Valutazioni medico per paziente", description = "Recupera la lista delle valutazioni effettuate dal medico autenticato per uno specifico paziente.")
     @GetMapping("/paziente/{pazienteId}/medico")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.paziente(authentication, #pazienteId)")
     public ResponseDTO<List<ValutazionePsicologicaDTO>> valutazionePsicologicaMedicoAndPaziente(
             @Parameter(description = "ID del paziente") @PathVariable("pazienteId") Integer pazienteId,
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<List<ValutazionePsicologicaDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(valutazioneService.valutazionePsicologicaMedicoAndPaziente(pazienteId, jwtAuthentication.getId()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(valutazioneService.valutazionePsicologicaMedicoAndPaziente(pazienteId, jwtAuthentication.getId()));
         return res;
     }
 
     @Operation(summary = "Storico valutazioni paziente", description = "Recupera tutte le valutazioni psicologiche di un paziente, visibile a medici, tutori e amministratori.")
     @GetMapping("/paziente/{pazienteId}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.paziente(authentication, #pazienteId)")
     public ResponseDTO<List<ValutazionePsicologicaDTO>> getByPaziente(
             @Parameter(description = "ID del paziente") @PathVariable Integer pazienteId) {
         ResponseDTO<List<ValutazionePsicologicaDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(valutazioneService.getByPaziente(pazienteId));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(valutazioneService.getByPaziente(pazienteId));
         return res;
     }
 
     @Operation(summary = "Dettaglio valutazione", description = "Recupera i dati completi di una specifica valutazione tramite il suo ID.")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'AMMINISTRATORE')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.valutazione(authentication, #id)")
     public ResponseDTO<ValutazionePsicologicaDTO> getById(
             @Parameter(description = "ID della valutazione") @PathVariable Integer id) {
         ResponseDTO<ValutazionePsicologicaDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(valutazioneService.getById(id));
-        }catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(valutazioneService.getById(id));
         return res;
     }
 
     @Operation(summary = "Crea nuova valutazione", description = "Permette a un medico di inserire una nuova valutazione psicologica per un paziente.")
     @PostMapping
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.paziente(authentication, #dto.pazienteId)")
     public ResponseDTO<ValutazionePsicologicaDTO> create(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @RequestBody ValutazioneCreateDTO dto) {
         ResponseDTO<ValutazionePsicologicaDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(valutazioneService.create(jwtAuthentication.getId(), dto));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(valutazioneService.create(jwtAuthentication.getId(), dto));
         return res;
     }
 
     @Operation(summary = "Aggiorna valutazione", description = "Consente al medico di modificare una valutazione psicologica esistente.")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.valutazioneDelMedico(authentication, #id)")
     public ResponseDTO<ValutazionePsicologicaDTO> update(
             @Parameter(description = "ID della valutazione") @PathVariable Integer id,
             @RequestBody ValutazioneUpdateDTO dto) {
         ResponseDTO<ValutazionePsicologicaDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(valutazioneService.update(id, dto));
-        } catch (Exception e) {
-            res.setOk(false);
-            res.setMessage(e.getMessage());
-        }
+        res.setOk(true);
+        res.setData(valutazioneService.update(id, dto));
         return res;
     }
 
     @Operation(summary = "Elimina valutazione", description = "Rimuove definitivamente una valutazione dal sistema (riservato ai medici).")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.valutazioneDelMedico(authentication, #id)")
     public void delete(@Parameter(description = "ID della valutazione da eliminare") @PathVariable Integer id) {
         valutazioneService.delete(id);
     }

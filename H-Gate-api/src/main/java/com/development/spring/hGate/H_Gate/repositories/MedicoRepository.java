@@ -20,8 +20,18 @@ public interface MedicoRepository extends CrudRepository<Medico, Integer> {
         SELECT m FROM Medico m
         JOIN FETCH m.user u
         WHERE u.isActive = true
+          AND (u.isVerified IS NULL OR u.isVerified = false)
+        ORDER BY u.createdAt ASC
     """)
     List<Medico> findMediciDaVerificare();
+
+    /** Solo medici approvati dalla clinica e con account attivo. */
+    @Query("""
+        SELECT m FROM Medico m
+        JOIN FETCH m.user u
+        WHERE u.isVerified = true AND (u.isActive IS NULL OR u.isActive = true)
+    """)
+    List<Medico> findMediciApprovati();
 
     Optional<Medico> findById(Integer medicoId);
 }

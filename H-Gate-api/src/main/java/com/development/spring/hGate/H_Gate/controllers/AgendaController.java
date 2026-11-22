@@ -41,13 +41,8 @@ public class AgendaController {
     @PreAuthorize("hasAuthority('MEDICO')")
     public ResponseDTO<List<VAgendaMedici>> findByMedicoId(JwtAuthentication jwtAuthentication) {
         ResponseDTO<List<VAgendaMedici>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(agendaMediciService.findByMedicoId(jwtAuthentication.getId()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(agendaMediciService.findByMedicoId(jwtAuthentication.getId()));
 
         return res;
     }

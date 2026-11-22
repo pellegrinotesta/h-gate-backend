@@ -55,42 +55,31 @@ public class MedicoController {
     @GetMapping("/all")
     public ResponseDTO<List<MedicoDTO>> getAll() {
         ResponseDTO<List<MedicoDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(medicoMapper.convertModelsToDtos(medicoService.getAll()));
-        } catch (Exception e) {
-            res.setOk(false);
-            res.setMessage(e.getMessage());
-        }
+        res.setOk(true);
+        res.setData(medicoMapper.convertModelsToDtos(medicoService.getAll()));
         return res;
     }
 
     @Operation(summary = "Dettaglio medico autenticato", description = "Recupera le informazioni del profilo del medico attualmente loggato tramite il suo User ID.")
     @GetMapping("/user-id")
+    @PreAuthorize("hasAuthority('MEDICO')")
     public ResponseDTO<MedicoDTO> findMedicoByUserId(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<MedicoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(medicoMapper.convertModelToDTO(medicoService.findMedicoByUserId(jwtAuthentication)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(medicoMapper.convertModelToDTO(medicoService.findMedicoByUserId(jwtAuthentication)));
         return res;
     }
 
     @Operation(summary = "Aggiorna profilo medico", description = "Aggiorna i dati anagrafici e professionali del medico.")
     @PutMapping("/update")
-    public ResponseDTO<MedicoDTO> update(@Valid @RequestBody Medico medico) {
+    @PreAuthorize("hasAuthority('MEDICO')")
+    public ResponseDTO<MedicoDTO> update(
+            @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
+            @Valid @RequestBody Medico medico) {
         ResponseDTO<MedicoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(medicoMapper.convertModelToDTO(medicoService.update(medico)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(medicoMapper.convertModelToDTO(medicoService.update(jwtAuthentication.getId(), medico)));
         return res;
     }
 
@@ -99,13 +88,8 @@ public class MedicoController {
     public ResponseDTO<List<TariffeMediciDTO>> listaTariffe(
             @Parameter(description = "ID del medico") @PathVariable("id") Integer id) {
         ResponseDTO<List<TariffeMediciDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(tariffeMediciMapper.convertModelsToDtos(medicoService.listaTariffeMedico(id)));
-        } catch (Exception e) {
-            res.setOk(false);
-            res.setMessage(e.getMessage());
-        }
+        res.setOk(true);
+        res.setData(tariffeMediciMapper.convertModelsToDtos(medicoService.listaTariffeMedico(id)));
         return res;
     }
 }

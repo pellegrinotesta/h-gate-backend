@@ -41,6 +41,7 @@ public class PazienteService extends BasicService {
     private final PazienteRepository pazienteRepository;
     private final TutoreLegaleRepository tutoreLegaleRepository;
     private final PazienteTutoreRepository pazienteTutoreRepository;
+    private final ApprovazioniService approvazioniService;
     private final PazienteSpecificationsFactory pazienteSpecificationsFactory;
     private final PazienteMapper pazienteMapper;
 
@@ -53,6 +54,9 @@ public class PazienteService extends BasicService {
 
     private static final String PAZIENTE_ID_NOT_FOUND = "Paziente with id %d not found.";
     private static final String TUTORE_ID_NOT_FOUND = "Tutore with id %d not found.";
+    public static final String MINORE_IN_ATTESA =
+            "Il minore risulta già registrato presso la clinica: la richiesta di associazione è stata inviata "
+            + "alla segreteria. Riceverai una email quando sarà verificata.";
 
 
     @Transactional(readOnly = true)
@@ -144,16 +148,6 @@ public class PazienteService extends BasicService {
 
             paziente = pazienteRepository.save(paziente);
         } else {
-            PazienteTutore relazioneEsistente = pazienteTutoreRepository
-                    .findFirstByPazienteId(paziente.getId())
-                    .orElse(null);
-
-            if (relazioneEsistente != null) {
-                relazioneDaUsare = relazioneEsistente.getRelazione();
-            } else if (relazioneDaUsare == null || relazioneDaUsare.trim().isEmpty()) {
-                throw new IllegalArgumentException("La relazione con il minore è obbligatoria");
-            }
-
             PazienteTutoreId checkId = new PazienteTutoreId();
             checkId.setPazienteId(paziente.getId());
             checkId.setTutoreId(tutore.getId());
@@ -164,6 +158,13 @@ public class PazienteService extends BasicService {
                         .orElseThrow();
                 return mapToPazienteDTO(paziente, relazioneEsistenteTutore);
             }
+
+            // SICUREZZA: il codice fiscale non è un segreto. Collegare in automatico un nuovo
+            // tutore a un minore già registrato darebbe accesso alla sua cartella clinica a
+            // chiunque conosca il CF: si crea una richiesta che la clinica verifica.
+            // Restituisce null: il controller comunica che la richiesta è in attesa.
+            approvazioniService.creaRichiestaAssociazione(paziente, tutore, relazioneDaUsare);
+            return null;
         }
 
         PazienteTutoreId relationId = new PazienteTutoreId();

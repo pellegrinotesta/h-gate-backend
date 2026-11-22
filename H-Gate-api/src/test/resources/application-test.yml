@@ -1,0 +1,40 @@
+# Profilo per i test automatici: database H2 in memoria (modalità MySQL), schema creato dalle entità.
+spring:
+  datasource:
+    url: jdbc:h2:mem:hgate;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: false
+  sql:
+    init:
+      mode: never
+  mail:
+    host: localhost
+    port: 2525
+
+jasypt:
+  encryptor:
+    password: test
+
+application:
+  cors:
+    allowedOrigins: http://localhost:4200
+  jwt:
+    # Chiave SOLO per i test (Base64, 48 byte)
+    secretKey: dGVzdC1rZXktc29sby1wZXItaS10ZXN0LWF1dG9tYXRpY2ktbm9uLXVzYXJlLWluLXByb2Q=
+
+app:
+  upload:
+    dir: target/test-uploads
+
+logging:
+  level:
+    root: WARN
+    com.development: INFO

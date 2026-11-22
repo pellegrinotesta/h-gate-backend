@@ -12,7 +12,7 @@ public interface UserSecurityMapper {
 
     @Mapping(target = "username", source = "user.email")
     @Mapping(target = "authorities", source = "user.roles")
-    @Mapping(target = "isEnabled", expression = "java(true)")
+    @Mapping(target = "isEnabled", expression = "java(user.getIsActive() == null || user.getIsActive())")
     @Mapping(target = "isCredentialsNonExpired", expression = "java(true)")
     @Mapping(target = "isAccountNonLocked", expression = "java(true)")
     @Mapping(target = "isAccountNonExpired", expression = "java(true)")

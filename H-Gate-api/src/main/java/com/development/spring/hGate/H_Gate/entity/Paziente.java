@@ -67,9 +67,11 @@ public class Paziente extends BasicEntity {
     private Medico medico;
 
     @Column(name = "consenso_privacy")
+    @Builder.Default
     private Boolean consensoPrivacy = false;
 
     @Column(name = "consenso_marketing")
+    @Builder.Default
     private Boolean consensoMarketing = false;
 
     @Column(name = "data_consenso")

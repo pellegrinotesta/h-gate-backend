@@ -43,7 +43,7 @@ public class AuthenticationController {
         if (authenticationToken.isPresent()) {
             return AuthenticationResponseDTO.builder().authentication(authenticationToken.get()).build();
         } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect credentials.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenziali non valide.");
         }
     }
 

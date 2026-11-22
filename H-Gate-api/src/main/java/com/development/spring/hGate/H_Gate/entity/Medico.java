@@ -48,31 +48,38 @@ public class Medico extends BasicEntity {
     private String curriculum;
 
     @Column(name = "durata_visita_minuti")
+    @Builder.Default
     private Integer durataVisitaMinuti = 30;
 
     @Column(name = "pausa_tra_visite_minuti")
+    @Builder.Default
     private Integer pausaTraVisiteMinuti = 5;
 
     @Column(name = "is_disponibile")
+    @Builder.Default
     private Boolean isDisponibile = true;
 
 
     @Column(name = "rating_medio", precision = 3, scale = 2)
     @DecimalMin("0.0")
     @DecimalMax("5.0")
+    @Builder.Default
     private BigDecimal ratingMedio = BigDecimal.ZERO;
 
     // Relazioni
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
     @JsonIgnore
+    @Builder.Default
     private List<Prenotazione> prenotazioni = new ArrayList<>();
 
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
     @JsonIgnore
+    @Builder.Default
     private List<Referto> referti = new ArrayList<>();
 
     @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL)
     @JsonIgnore
+    @Builder.Default
     private List<DisponibilitaMedico> disponibilita = new ArrayList<>();
 
 

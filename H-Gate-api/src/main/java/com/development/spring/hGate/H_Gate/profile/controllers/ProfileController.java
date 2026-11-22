@@ -39,18 +39,16 @@ public class ProfileController {
 
 
     @PutMapping("/update")
-    public ResponseDTO<UserDTO> updateGeneralInfo(@Valid @RequestBody UserDTO userUpdate) {
+    public ResponseDTO<UserDTO> updateGeneralInfo(JwtAuthentication jwtAuthentication,
+                                                  @Valid @RequestBody UserDTO userUpdate) {
         ResponseDTO<UserDTO> res = new ResponseDTO<>();
 
-        try {
-            Users user = userMapper.convertDtoToModel(userUpdate);
-            res.setOk(true);
-            res.setData(userMapper.convertModelToDTO(profileService.updateGeneralInfo(user)));
+        Users user = userMapper.convertDtoToModel(userUpdate);
+        // Si può modificare solo il proprio profilo: l'id nel body viene ignorato
+        user.setId(jwtAuthentication.getId());
+        res.setOk(true);
+        res.setData(userMapper.convertModelToDTO(profileService.updateGeneralInfo(user)));
 
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
 
         return res;
     }

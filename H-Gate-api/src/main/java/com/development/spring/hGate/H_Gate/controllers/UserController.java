@@ -28,13 +28,8 @@ public class UserController {
     public ResponseDTO<UserDTO> getById(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<UserDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(userMapper.convertModelToDTO(userService.getById(jwtAuthentication.getId())));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(userMapper.convertModelToDTO(userService.getById(jwtAuthentication.getId())));
         return res;
     }
 }

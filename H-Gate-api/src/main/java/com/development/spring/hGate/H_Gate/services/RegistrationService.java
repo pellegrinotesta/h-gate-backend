@@ -30,11 +30,23 @@ public class RegistrationService extends BasicService {
     private final MedicoRepository medicoRepository;
     private final PasswordEncoder passwordEncoder;
     private final PazienteTutoreRepository pazienteTutoreRepository;
+    private final ApprovazioniService approvazioniService;
+
+    public static final String MSG_TUTORE_OK = "Registrazione completata. Ora puoi accedere.";
+    public static final String MSG_TUTORE_IN_ATTESA =
+            "Registrazione completata. Il minore risulta già registrato presso la clinica: "
+            + "l'associazione sarà attiva dopo la verifica della segreteria. Riceverai una email di conferma.";
+    public static final String MSG_MEDICO_IN_ATTESA =
+            "Registrazione completata. Il tuo account sarà attivo dopo l'approvazione della clinica: "
+            + "riceverai una email di conferma.";
+
+    /** Esito della registrazione: utente creato e messaggio da mostrare. */
+    public record Esito(Users user, String messaggio) {}
 
     private final Logger logger = LoggerFactory.getLogger(RegistrationService.class);
 
     @Transactional
-    public Users registerUser(UserRegistrationDTO dto) {
+    public Esito registerUser(UserRegistrationDTO dto) {
         validateRegistration(dto);
 
         // 1. Crea e salva l'utente base
@@ -42,17 +54,20 @@ public class RegistrationService extends BasicService {
         user = userRepository.save(user);
 
         // 2. Crea l'entità specifica in base al ruolo
+        String messaggio;
         if("TUTORE".equalsIgnoreCase(dto.getRuolo())) {
             TutoreLegale tutore = createTutore(user);
-            createPazienteAndRelation(dto, tutore);
+            boolean associato = createPazienteAndRelation(dto, tutore);
+            messaggio = associato ? MSG_TUTORE_OK : MSG_TUTORE_IN_ATTESA;
         } else if("MEDICO".equalsIgnoreCase(dto.getRuolo())) {
             createMedico(dto, user);
+            messaggio = MSG_MEDICO_IN_ATTESA;
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ruolo non valido: " + dto.getRuolo());
         }
 
         logger.info("User registered successfully with email: {}", dto.getEmail());
-        return user;
+        return new Esito(user, messaggio);
     }
 
     private TutoreLegale createTutore(Users user) {
@@ -63,7 +78,11 @@ public class RegistrationService extends BasicService {
         return tutoreLegaleRepository.save(tutore);
     }
 
-    private void createPazienteAndRelation(UserRegistrationDTO dto, TutoreLegale tutore) {
+    /**
+     * @return true se il tutore è stato associato subito al minore (minore nuovo),
+     *         false se è stata creata una richiesta di associazione da approvare.
+     */
+    private boolean createPazienteAndRelation(UserRegistrationDTO dto, TutoreLegale tutore) {
         if (dto.getMinore() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dati del minore obbligatori per i tutori");
         }
@@ -99,26 +118,10 @@ public class RegistrationService extends BasicService {
 
             paziente = pazienteRepository.save(paziente);
         } else {
-            // Paziente esistente - verifica se questo tutore ha già una relazione
-            PazienteTutoreId checkId = new PazienteTutoreId();
-            checkId.setPazienteId(paziente.getId());
-            checkId.setTutoreId(tutore.getId());
-
-            if (pazienteTutoreRepository.existsById(checkId)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Questo tutore ha già una relazione con il minore"
-                );
-            }
-
-            // Recupera la relazione esistente per mantenere coerenza
-            PazienteTutore relazioneEsistente = pazienteTutoreRepository
-                    .findFirstByPazienteId(paziente.getId())
-                    .orElse(null);
-
-            if (relazioneEsistente != null) {
-                relazioneDaUsare = relazioneEsistente.getRelazione();
-            }
+            // SICUREZZA: un nuovo account non può collegarsi da solo a un minore già registrato
+            // (il codice fiscale non è un segreto): si crea una richiesta che la clinica verifica.
+            approvazioniService.creaRichiestaAssociazione(paziente, tutore, relazioneDaUsare);
+            return false;
         }
 
         // Crea la relazione paziente-tutore
@@ -134,6 +137,7 @@ public class RegistrationService extends BasicService {
                 .build();
 
         pazienteTutoreRepository.save(relazione);
+        return true;
     }
 
     private void createMedico(UserRegistrationDTO dto, Users user) {
@@ -183,6 +187,9 @@ public class RegistrationService extends BasicService {
                 .provincia(dto.getProvincia())
                 .cap(dto.getCap())
                 .roles(roles)
+                .isActive(true)
+                // I medici devono essere approvati dalla clinica prima di poter accedere
+                .isVerified(!roles.contains(Role.MEDICO))
                 .createdAt(new Date())
                 .build();
     }

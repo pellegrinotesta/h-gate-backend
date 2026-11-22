@@ -79,6 +79,7 @@ public class Referto extends BasicEntity {
     private LocalDate prossimoControllo;
 
     @Column(name = "is_firmato")
+    @Builder.Default
     private Boolean isFirmato = false;
 
     @Column(name = "firma_digitale", columnDefinition = "TEXT")
@@ -88,6 +89,7 @@ public class Referto extends BasicEntity {
     private LocalDateTime dataFirma;
 
     @Column(name = "is_inviato_paziente")
+    @Builder.Default
     private Boolean isInviatoPaziente = false;
 
     @Column(name = "data_invio_paziente")

@@ -16,10 +16,16 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   jpa:
+    hibernate:
+      # Lo schema è gestito da schema.sql (init di MySQL): Hibernate non deve modificarlo.
+      # Quando verrà introdotto Flyway si potrà passare a "validate".
+      ddl-auto: none
     properties:
       hibernate:
-        ddl-auto: validate
         format_sql: true
+  sql:
+    init:
+      mode: never
 
   flyway:
     enabled: false

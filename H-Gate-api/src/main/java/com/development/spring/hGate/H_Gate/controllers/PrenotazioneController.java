@@ -54,14 +54,9 @@ public class PrenotazioneController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @RequestBody PrenotazioneCreateDTO dto) {
         ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
-        try {
-            Prenotazione prenotazione = prenotazioneService.creaPrenotazione(jwtAuthentication.getId(), dto);
-            res.setData(prenotazioneMapper.convertModelToDTO(prenotazione));
-            res.setOk(true);
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        Prenotazione prenotazione = prenotazioneService.creaPrenotazione(jwtAuthentication.getId(), dto);
+        res.setData(prenotazioneMapper.convertModelToDTO(prenotazione));
+        res.setOk(true);
         return res;
     }
 
@@ -73,13 +68,8 @@ public class PrenotazioneController {
             @Parameter(description = "ID della prenotazione") @PathVariable Integer id,
             @Valid @RequestBody PrenotazioneAnnullaDTO dto) {
         ResponseDTO<String> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneService.annullaPrenotazione(jwtAuthentication.getId(), id, dto.getMotivo()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(prenotazioneService.annullaPrenotazione(jwtAuthentication.getId(), id, dto.getMotivo()));
         return res;
     }
 
@@ -90,13 +80,8 @@ public class PrenotazioneController {
             @Parameter(description = "ID del medico") @PathVariable Integer medicoId,
             @Parameter(description = "Data in formato YYYY-MM-DD", example = "2024-05-20") @RequestParam String data) {
         ResponseDTO<SlotDisponibiliDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneService.getSlotDisponibili(medicoId, data));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(prenotazioneService.getSlotDisponibili(medicoId, data));
         return res;
     }
 
@@ -107,13 +92,8 @@ public class PrenotazioneController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID della prenotazione") @PathVariable("prenotazioneId") Integer prenotazioneId) {
         ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.confermaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.confermaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
         return res;
     }
 
@@ -124,43 +104,32 @@ public class PrenotazioneController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID della prenotazione") @PathVariable("prenotazioneId") Integer prenotazioneId) {
         ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.completaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.completaPrenotazione(jwtAuthentication.getId(), prenotazioneId)));
         return res;
     }
 
     @Operation(summary = "Dettaglio prenotazione", description = "Recupera i dati di una specifica prenotazione.")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE') and @access.prenotazione(authentication, #id)")
     public ResponseDTO<PrenotazioneDTO> getById(@Parameter(description = "ID della prenotazione") @PathVariable("id") Integer id) {
         ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.getById(id)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.getById(id)));
         return res;
     }
 
     @Operation(summary = "Aggiorna prenotazione", description = "Modifica i dettagli di una prenotazione esistente (azione riservata al medico).")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEDICO')")
-    public ResponseDTO<PrenotazioneDTO> update(@RequestBody PrenotazioneUpdateDTO request) {
+    @PreAuthorize("hasAuthority('MEDICO') and @access.prenotazioneDelMedico(authentication, #id)")
+    public ResponseDTO<PrenotazioneDTO> update(
+            @Parameter(description = "ID della prenotazione") @PathVariable("id") Integer id,
+            @RequestBody PrenotazioneUpdateDTO request) {
         ResponseDTO<PrenotazioneDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.update(request)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        // L'ID autorizzato è quello del path: non ci si fida di quello nel body
+        request.setId(id);
+        res.setOk(true);
+        res.setData(prenotazioneMapper.convertModelToDTO(prenotazioneService.update(request)));
         return res;
     }
 }

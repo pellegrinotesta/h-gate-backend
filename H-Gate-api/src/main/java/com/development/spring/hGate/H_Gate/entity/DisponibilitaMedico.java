@@ -42,6 +42,7 @@ public class DisponibilitaMedico extends BasicEntity {
     private LocalTime oraFine;
 
     @Column(name = "is_attiva")
+    @Builder.Default
     private Boolean isAttiva = true;
 
     @Column(columnDefinition = "TEXT")

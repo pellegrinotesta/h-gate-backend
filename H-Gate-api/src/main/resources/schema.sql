@@ -130,6 +130,27 @@ CREATE TABLE pazienti_tutori (
     FOREIGN KEY (tutore_id) REFERENCES tutori_legali(id) ON DELETE CASCADE
 );
 
+-- Richieste di un tutore di essere associato a un minore già registrato:
+-- approvate o rifiutate da un amministratore dopo la verifica.
+CREATE TABLE richieste_associazione (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paziente_id INT NOT NULL,
+    tutore_id INT NOT NULL,
+    relazione VARCHAR(50) NOT NULL,
+    stato VARCHAR(20) NOT NULL DEFAULT 'IN_ATTESA', -- IN_ATTESA, APPROVATA, RIFIUTATA
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    gestita_da INT NULL,
+    data_gestione DATETIME NULL,
+    motivo_rifiuto TEXT NULL,
+
+    FOREIGN KEY (paziente_id) REFERENCES pazienti(id) ON DELETE CASCADE,
+    FOREIGN KEY (tutore_id) REFERENCES tutori_legali(id) ON DELETE CASCADE,
+    FOREIGN KEY (gestita_da) REFERENCES users(id) ON DELETE SET NULL,
+
+    INDEX idx_richieste_stato (stato),
+    INDEX idx_richieste_paziente_tutore (paziente_id, tutore_id)
+);
+
 CREATE TABLE percorsi_terapeutici (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paziente_id INTEGER NOT NULL,

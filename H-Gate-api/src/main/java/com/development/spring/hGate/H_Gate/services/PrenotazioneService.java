@@ -50,6 +50,10 @@ public class PrenotazioneService extends BasicService {
     private static final String PRENOTAZIONE_NOT_FOUND = "Prenotazione non trovata";
 
 
+    /** Stati per cui una prenotazione occupa l'orario del medico. */
+    private static final List<StatoPrenotazioneEnum> STATI_CHE_OCCUPANO_SLOT =
+            List.of(StatoPrenotazioneEnum.IN_ATTESA, StatoPrenotazioneEnum.CONFERMATA);
+
     public Prenotazione getById(Integer id) {
         return prenotazioneRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRENOTAZIONE_NOT_FOUND));
     }
@@ -70,7 +74,9 @@ public class PrenotazioneService extends BasicService {
 
         Medico medico = medicoRepository.findById(dto.getMedicoId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MEDICO_NOT_FOUND));
 
-        if(!medico.getIsDisponibile()) {
+        if(!Boolean.TRUE.equals(medico.getIsDisponibile())
+                || !Boolean.TRUE.equals(medico.getUser().getIsVerified())
+                || Boolean.FALSE.equals(medico.getUser().getIsActive())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il medico non è ancora verificato");
         }
 
@@ -274,15 +280,20 @@ public class PrenotazioneService extends BasicService {
     }
 
     private boolean verificaDisponibilitaSlot(Integer medicoId, LocalDateTime dataOra, LocalDateTime dataOraFine) {
-        List<Prenotazione> conflitti = prenotazioneRepository.findConflittingAppointments(medicoId, dataOra, dataOraFine, List.of(StatoPrenotazioneEnum.CONFERMATA.name(), StatoPrenotazioneEnum.IN_ATTESA.name()));
+        List<Prenotazione> conflitti = prenotazioneRepository.findConflittingAppointments(medicoId, dataOra, dataOraFine, STATI_CHE_OCCUPANO_SLOT);
         return conflitti.isEmpty();
     }
 
     @Transactional(readOnly = true)
     public SlotDisponibiliDTO getSlotDisponibili(Integer medicoId, String data) {
-        Medico medico = medicoRepository.findById(medicoId).orElseThrow(() -> new IllegalArgumentException("Medico non trovato"));
+        Medico medico = medicoRepository.findById(medicoId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MEDICO_NOT_FOUND));
 
-        LocalDate date = LocalDate.parse(data);
+        LocalDate date;
+        try {
+            date = LocalDate.parse(data);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data non valida: usare il formato AAAA-MM-GG");
+        }
 
         // 1. VERIFICA LA DISPONIBILITÀ DEL MEDICO PER QUEL GIORNO
         Optional<DisponibilitaMedico> disponibilita = disponibilitaMedicoService.getOrariGiorno(medicoId, date);
@@ -311,8 +322,8 @@ public class PrenotazioneService extends BasicService {
         // 3. Prenotazioni già esistenti per quel giorno
         List<Prenotazione> prenotazioni = prenotazioneRepository.findByMedicoIdAndDataOraBetween(medicoId, startOfDay, endOfDay);
 
-        int durata = medico.getDurataVisitaMinuti();
-        int pausa = medico.getPausaTraVisiteMinuti();
+        int durata = medico.getDurataVisitaMinuti() != null ? medico.getDurataVisitaMinuti() : 30;
+        int pausa = medico.getPausaTraVisiteMinuti() != null ? medico.getPausaTraVisiteMinuti() : 5;
 
         List<SlotDisponibileDTO> slots = new ArrayList<>();
 
@@ -326,9 +337,10 @@ public class PrenotazioneService extends BasicService {
             LocalDateTime finalCurrent = current;
 
             // Verifica se lo slot è già occupato da una prenotazione
-            boolean occupato = prenotazioni.stream().anyMatch(p ->
-                    overlaps(finalCurrent, slotEnd, p.getDataOra(), p.getDataOraFine())
-            );
+            // Le prenotazioni annullate non occupano lo slot (stessa regola di verificaDisponibilitaSlot)
+            boolean occupato = prenotazioni.stream()
+                    .filter(p -> STATI_CHE_OCCUPANO_SLOT.contains(p.getStato()))
+                    .anyMatch(p -> overlaps(finalCurrent, slotEnd, p.getDataOra(), p.getDataOraFine()));
 
             // Verifica se lo slot è nel passato
             boolean passato = current.isBefore(LocalDateTime.now());

@@ -36,17 +36,12 @@ public class PazienteController {
 
     @Operation(summary = "Ottieni paziente per ID", description = "Recupera i dati anagrafici di un singolo paziente tramite il suo ID univoco.")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.paziente(authentication, #id)")
     public ResponseDTO<PazienteDTO> getById(
             @Parameter(description = "ID del paziente") @PathVariable("id") Integer id) {
         ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(pazienteMapper.convertModelToDTO(pazienteService.getById(id)));
-        } catch (Exception e) {
-            res.setOk(false);
-            res.setMessage(e.getMessage());
-        }
+        res.setOk(true);
+        res.setData(pazienteMapper.convertModelToDTO(pazienteService.getById(id)));
         return res;
     }
 
@@ -65,45 +60,37 @@ public class PazienteController {
 
     @Operation(summary = "Lista pazienti per utente", description = "Recupera la lista di pazienti associati all'utente (tutore) attualmente autenticato.")
     @GetMapping("/user-id")
+    @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<List<PazienteDTO>> findByUserId(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<List<PazienteDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(pazienteMapper.convertModelsToDtos(pazienteService.findByUserId(jwtAuthentication)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(pazienteMapper.convertModelsToDtos(pazienteService.findByUserId(jwtAuthentication)));
         return res;
     }
 
     @Operation(summary = "Aggiorna informazioni paziente", description = "Aggiorna i dati anagrafici di un paziente esistente.")
     @PutMapping("/update")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE') and @access.paziente(authentication, #paziente.id)")
     public ResponseDTO<PazienteDTO> update(@Valid @RequestBody Paziente paziente) {
         ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(pazienteMapper.convertModelToDTO(pazienteService.updateInfo(paziente)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(pazienteMapper.convertModelToDTO(pazienteService.updateInfo(paziente)));
         return res;
     }
 
     @Operation(summary = "Aggiungi nuovo paziente", description = "Crea un nuovo profilo paziente associandolo automaticamente al tutore che effettua l'operazione.")
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('TUTORE')")
     public ResponseDTO<PazienteDTO> addNewPaziente(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @RequestBody PrenotazioneDTO.PazienteMinDTO paziente) {
         ResponseDTO<PazienteDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(pazienteService.addNewPaziente(jwtAuthentication, paziente));
-        } catch (Exception e) {
-            res.setOk(false);
-            res.setMessage(e.getMessage());
+        PazienteDTO creato = pazienteService.addNewPaziente(jwtAuthentication, paziente);
+        res.setOk(true);
+        res.setData(creato);
+        if (creato == null) {
+            res.setMessage(PazienteService.MINORE_IN_ATTESA);
         }
         return res;
     }

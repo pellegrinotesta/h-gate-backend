@@ -34,14 +34,9 @@ public class NotificaController {
             @ParameterObject Pageable pageable
     ) {
         ResponseDTO<PageDTO<NotificaDTO>> res = new ResponseDTO<>();
-        try {
-            Page<Notifica> notifiche = notificheService.getNotificheUtente(authentication.getId(), pageable);
-            res.setOk(true);
-            res.setData(notificaMapper.convertModelsPageToDtosPage(notifiche));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        Page<Notifica> notifiche = notificheService.getNotificheUtente(authentication.getId(), pageable);
+        res.setOk(true);
+        res.setData(notificaMapper.convertModelsPageToDtosPage(notifiche));
         return res;
     }
 
@@ -49,14 +44,9 @@ public class NotificaController {
     @GetMapping("/non-lette")
     public ResponseDTO<List<NotificaDTO>> getNotificheNonLette(@Parameter(hidden = true) JwtAuthentication authentication) {
         ResponseDTO<List<NotificaDTO>> res = new ResponseDTO<>();
-        try {
-            List<Notifica> notifiche = notificheService.getNotificheNonLette(authentication.getId());
-            res.setOk(true);
-            res.setData(notificaMapper.convertModelsToDtos(notifiche));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        List<Notifica> notifiche = notificheService.getNotificheNonLette(authentication.getId());
+        res.setOk(true);
+        res.setData(notificaMapper.convertModelsToDtos(notifiche));
         return res;
     }
 
@@ -64,13 +54,8 @@ public class NotificaController {
     @GetMapping("/conteggio-non-lette")
     public ResponseDTO<Long> getConteggioNonLette(@Parameter(hidden = true) JwtAuthentication authentication) {
         ResponseDTO<Long> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(notificheService.contaNonLette(authentication.getId()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(notificheService.contaNonLette(authentication.getId()));
         return res;
     }
 
@@ -81,13 +66,8 @@ public class NotificaController {
             @Parameter(hidden = true) JwtAuthentication authentication
     ) {
         ResponseDTO<?> res = new ResponseDTO<>();
-        try {
-            notificheService.marcaComeLetta(id, authentication.getId());
-            res.setOk(true);
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        notificheService.marcaComeLetta(id, authentication.getId());
+        res.setOk(true);
         return res;
     }
 
@@ -95,13 +75,8 @@ public class NotificaController {
     @PutMapping("/marca-tutte-lette")
     public ResponseDTO<?> marcaTutteComeLette(@Parameter(hidden = true) JwtAuthentication authentication) {
         ResponseDTO<?> res = new ResponseDTO<>();
-        try {
-            notificheService.marcaTutteComeLette(authentication.getId());
-            res.setOk(true);
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        notificheService.marcaTutteComeLette(authentication.getId());
+        res.setOk(true);
         return res;
     }
 
@@ -112,13 +87,8 @@ public class NotificaController {
             @Parameter(hidden = true) JwtAuthentication authentication
     ) {
         ResponseDTO<?> res = new ResponseDTO<>();
-        try {
-            notificheService.eliminaNotifica(id, authentication.getId());
-            res.setOk(true);
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        notificheService.eliminaNotifica(id, authentication.getId());
+        res.setOk(true);
         return res;
     }
 }

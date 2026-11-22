@@ -16,4 +16,6 @@ public interface PercorsiTerapeuticiRepository extends CrudRepository<PercorsiTe
     @Query("SELECT p FROM PercorsiTerapeutici p WHERE p.medico.id = :medicoId AND p.paziente.id = :pazienteId")
     List<PercorsiTerapeutici> percorsiTerapeuticiPazienteAndMedico(@Param("medicoId") Integer medicoId, @Param("pazienteId") Integer pazienteId);
 
+    /** medico è un riferimento a Users: medicoUserId è l'id utente del medico */
+    boolean existsByPazienteIdAndMedicoId(Integer pazienteId, Integer medicoUserId);
 }

@@ -51,8 +51,12 @@ public class MedicoService extends BasicService {
             // Mostra solo medici verificati e disponibili
             Specification<Medico> attivi = (root, query, cb) -> {
                 query.distinct(true); // ← evita duplicati dalla join su user
+                var user = root.join("user");
                 return cb.and(
-                        cb.equal(root.get("isDisponibile"), true)
+                        cb.equal(root.get("isDisponibile"), true),
+                        // solo medici approvati dalla clinica e con account attivo
+                        cb.isTrue(user.get("isVerified")),
+                        cb.or(cb.isNull(user.get("isActive")), cb.isTrue(user.get("isActive")))
                 );
             };
 
@@ -85,12 +89,20 @@ public class MedicoService extends BasicService {
         return medicoRepository.findMedicoByUserId(jwtAuthentication.getId());
     }
 
+    /** Elenco pubblico dei medici: solo quelli approvati dalla clinica. */
     public List<Medico> getAll() {
-        return medicoRepository.findAll();
+        return medicoRepository.findMediciApprovati();
     }
 
-    public Medico update(Medico medico) {
-        Medico medicoExisting = medicoRepository.findById(medico.getId()).orElseThrow(() -> buildEntityWithIdNotFoundException(medico.getId(), MEDICO_ID_NOT_FOUND));
+    /**
+     * Aggiorna il profilo del medico autenticato. L'eventuale id nel body viene ignorato:
+     * un medico può modificare solo il proprio profilo.
+     */
+    public Medico update(Integer medicoUserId, Medico medico) {
+        Medico medicoExisting = medicoRepository.findMedicoByUserId(medicoUserId);
+        if (medicoExisting == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profilo medico non trovato");
+        }
 
         medicoExisting.setAnnoLaurea(medico.getAnnoLaurea());
         medicoExisting.setBio(medico.getBio());

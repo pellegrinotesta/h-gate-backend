@@ -19,14 +19,12 @@ import java.util.*;
 public class JwtService {
 
     private final ObjectMapper objectMapper;
-    private final CryptoService cryptoService;
     private final JwtParser jwtParser;
     private final JwtServiceConfig jwtServiceConfig;
 
-    public JwtService(JwtServiceConfig jwtServiceConfig, CryptoService cryptoService, ObjectMapper objectMapper) throws Exception {
+    public JwtService(JwtServiceConfig jwtServiceConfig, ObjectMapper objectMapper) throws Exception {
         this.jwtServiceConfig = jwtServiceConfig;
         this.objectMapper = objectMapper;
-        this.cryptoService = cryptoService;
         this.jwtParser = Jwts.parser().setSigningKey(jwtServiceConfig.getSecretKey());
     }
 
@@ -86,15 +84,14 @@ public class JwtService {
     }
 
     private String buildToken(String subject, Map<String, Object> claims) {
-        String jwt = Jwts.builder()
+        // Il JWT è firmato (HS256): non serve cifrarlo, il contenuto (id, email, ruoli) non è segreto.
+        return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtServiceConfig.getTokenDurationMs()))
                 .signWith(SignatureAlgorithm.HS256, jwtServiceConfig.getSecretKey())
                 .compact();
-
-        return cryptoService.encrypt(jwt);
     }
 
 

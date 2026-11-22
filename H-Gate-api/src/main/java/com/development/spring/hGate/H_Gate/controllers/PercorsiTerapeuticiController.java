@@ -25,87 +25,65 @@ public class PercorsiTerapeuticiController {
 
     @Operation(summary = "Percorsi medico per paziente", description = "Recupera i percorsi terapeutici creati dal medico autenticato per uno specifico paziente.")
     @GetMapping("/paziente/{pazienteId}")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.paziente(authentication, #pazienteId)")
     public ResponseDTO<List<PercorsiTerapeuticiDTO>> percorsiTerapeuticiMedicoAndPaziente(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID del paziente") @PathVariable("pazienteId") Integer pazienteId) {
         ResponseDTO<List<PercorsiTerapeuticiDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(percorsiTerapeuticiService.percorsiTerapeuticiMedicoAndPaziente(jwtAuthentication.getId(), pazienteId));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(percorsiTerapeuticiService.percorsiTerapeuticiMedicoAndPaziente(jwtAuthentication.getId(), pazienteId));
         return res;
     }
 
     @Operation(summary = "Tutti i percorsi del paziente", description = "Recupera la lista completa dei percorsi terapeutici di un paziente (anche di medici diversi).")
     @GetMapping("/{pazienteId}/paziente")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.paziente(authentication, #pazienteId)")
     public ResponseDTO<List<PercorsiTerapeuticiDTO>> getByPaziente(
             @Parameter(description = "ID del paziente") @PathVariable("pazienteId") Integer pazienteId) {
         ResponseDTO<List<PercorsiTerapeuticiDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(percorsiTerapeuticiService.getByPaziente(pazienteId));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(percorsiTerapeuticiService.getByPaziente(pazienteId));
         return res;
     }
 
     @Operation(summary = "Dettaglio percorso", description = "Recupera le informazioni dettagliate di un singolo percorso terapeutico tramite il suo ID.")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.percorso(authentication, #id)")
     public ResponseDTO<PercorsiTerapeuticiDTO> getById(
             @Parameter(description = "ID del percorso terapeutico") @PathVariable("id") Integer id) {
         ResponseDTO<PercorsiTerapeuticiDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(percorsiTerapeuticiService.getById(id));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(percorsiTerapeuticiService.getById(id));
         return res;
     }
 
     @Operation(summary = "Crea nuovo percorso", description = "Permette a un medico di creare un nuovo piano terapeutico per un paziente.")
     @PostMapping
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.paziente(authentication, #dto.pazienteId)")
     public ResponseDTO<PercorsiTerapeuticiDTO> create(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @RequestBody PercorsoCreateDTO dto) {
         ResponseDTO<PercorsiTerapeuticiDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(percorsiTerapeuticiService.create(jwtAuthentication.getId(), dto));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(percorsiTerapeuticiService.create(jwtAuthentication.getId(), dto));
         return res;
     }
 
     @Operation(summary = "Aggiorna percorso", description = "Modifica un percorso terapeutico esistente (riservato ai medici).")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.percorsoModificabile(authentication, #id)")
     public ResponseDTO<PercorsiTerapeuticiDTO> update(
             @Parameter(description = "ID del percorso da aggiornare") @PathVariable Integer id,
             @RequestBody PercorsoUpdateDTO dto) {
         ResponseDTO<PercorsiTerapeuticiDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(percorsiTerapeuticiService.update(id, dto));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(percorsiTerapeuticiService.update(id, dto));
         return res;
     }
 
     @Operation(summary = "Elimina percorso", description = "Rimuove un percorso terapeutico dal sistema.")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.percorsoDelMedico(authentication, #id)")
     public void delete(@Parameter(description = "ID del percorso da eliminare") @PathVariable Integer id) {
         percorsiTerapeuticiService.delete(id);
     }

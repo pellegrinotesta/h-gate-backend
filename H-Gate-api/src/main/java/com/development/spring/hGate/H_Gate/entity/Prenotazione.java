@@ -65,6 +65,7 @@ public class Prenotazione extends BasicEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private StatoPrenotazioneEnum stato = StatoPrenotazioneEnum.IN_ATTESA;
 
     @DecimalMin("0.0")
@@ -89,15 +90,19 @@ public class Prenotazione extends BasicEntity {
     private LocalDateTime dataAnnullamento;
 
     @Column(name = "promemoria_inviato")
+    @Builder.Default
     private Boolean promemoriaInviato = false;
 
     @Column(name = "conferma_inviata")
+    @Builder.Default
     private Boolean confermaInviata = false;
 
     @Column(name = "is_prima_visita")
+    @Builder.Default
     private Boolean isPrimaVisita = false;
 
     @Column(name = "is_urgente")
+    @Builder.Default
     private Boolean isUrgente = false;
 
     @CreationTimestamp
@@ -114,6 +119,7 @@ public class Prenotazione extends BasicEntity {
     private Referto referto;
 
     @OneToMany(mappedBy = "prenotazione", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Allegato> allegati = new ArrayList<>();
 
     @PrePersist

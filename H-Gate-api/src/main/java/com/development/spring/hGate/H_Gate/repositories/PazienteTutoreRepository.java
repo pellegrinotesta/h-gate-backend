@@ -27,4 +27,16 @@ public interface PazienteTutoreRepository extends CrudRepository<PazienteTutore,
 
     @Query("SELECT pt.paziente.id FROM PazienteTutore pt WHERE pt.tutore.user.id = :tutoreUserId")
     List<Integer> findPazienteIdsByTutoreUserId(@Param("tutoreUserId") Integer tutoreUserId);
+
+    @Query("SELECT CASE WHEN COUNT(pt) > 0 THEN true ELSE false END " +
+            "FROM PazienteTutore pt " +
+            "WHERE pt.paziente.id = :pazienteId " +
+            "AND pt.tutore.user.id = :tutoreUserId")
+    boolean existsByPazienteIdAndTutoreUserId(
+            @Param("pazienteId") Integer pazienteId,
+            @Param("tutoreUserId") Integer tutoreUserId
+    );
+
+    @Query("SELECT pt FROM PazienteTutore pt JOIN FETCH pt.tutore t JOIN FETCH t.user WHERE pt.paziente.id = :pazienteId")
+    List<PazienteTutore> findAllByPazienteIdWithTutore(@Param("pazienteId") Integer pazienteId);
 }

@@ -83,7 +83,9 @@ public class DisponibilitaMediciService extends BasicService {
      */
     @Transactional(readOnly = true)
     public Optional<DisponibilitaMedico> getOrariGiorno(Integer medicoId, LocalDate data) {
-        int giornoSettimana = data.getDayOfWeek().getValue() - 1;
+        // Convenzione di schema e frontend: 0=Domenica, 1=Lunedì, ..., 6=Sabato.
+        // DayOfWeek di Java invece va da 1=Lunedì a 7=Domenica.
+        int giornoSettimana = data.getDayOfWeek().getValue() % 7;
         return disponibilitaMediciRepository.findByMedicoIdAndGiornoSettimanaAndIsAttivaTrue(
                 medicoId,
                 giornoSettimana
@@ -167,7 +169,8 @@ public class DisponibilitaMediciService extends BasicService {
         LocalTime fine = LocalTime.of(17, 0);
 
         // Da Lunedì (0) a Venerdì (4)
-        return List.of(0, 1, 2, 3, 4).stream()
+        // Lunedì-Venerdì (0=Domenica, 1=Lunedì, ...)
+        return List.of(1, 2, 3, 4, 5).stream()
                 .map(giorno -> {
                     Optional<DisponibilitaMedico> esistente = disponibilitaMediciRepository
                             .findByMedicoIdAndGiornoSettimana(medico.getId(), giorno);

@@ -25,16 +25,12 @@ public class TariffeMediciController {
 
     @Operation(summary = "Ottieni le mie tariffe", description = "Recupera il listino completo delle prestazioni caricate dal medico attualmente autenticato.")
     @GetMapping("/mie")
+    @PreAuthorize("hasAuthority('MEDICO')")
     public ResponseDTO<List<TariffeMediciDTO>> getByMedici(
             @Parameter(hidden = true) JwtAuthentication authentication) {
         ResponseDTO<List<TariffeMediciDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(tariffeMediciMapper.convertModelsToDtos(tariffeMedicoService.getByMedico(authentication.getId())));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(tariffeMediciMapper.convertModelsToDtos(tariffeMedicoService.getByMedico(authentication.getId())));
         return res;
     }
 
@@ -45,13 +41,8 @@ public class TariffeMediciController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @RequestBody TariffeMediciDTO request) {
         ResponseDTO<TariffeMediciDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.create(jwtAuthentication.getId(), request)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.create(jwtAuthentication.getId(), request)));
         return res;
     }
 
@@ -63,13 +54,8 @@ public class TariffeMediciController {
             @Parameter(description = "ID della tariffa") @PathVariable Integer id,
             @RequestBody TariffeMediciDTO dto) {
         ResponseDTO<TariffeMediciDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.update(id, jwtAuthentication.getId(), dto)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.update(id, jwtAuthentication.getId(), dto)));
         return res;
     }
 
@@ -80,13 +66,8 @@ public class TariffeMediciController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID della tariffa da eliminare") @PathVariable("id") Integer id) {
         ResponseDTO<TariffeMediciDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            tariffeMedicoService.delete(jwtAuthentication.getId(), id);
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        tariffeMedicoService.delete(jwtAuthentication.getId(), id);
         return res;
     }
 
@@ -97,13 +78,8 @@ public class TariffeMediciController {
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication,
             @Parameter(description = "ID della tariffa") @PathVariable("id") Integer id) {
         ResponseDTO<TariffeMediciDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.toggleAttiva(jwtAuthentication.getId(), id)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(tariffeMediciMapper.convertModelToDTO(tariffeMedicoService.toggleAttiva(jwtAuthentication.getId(), id)));
         return res;
     }
 }

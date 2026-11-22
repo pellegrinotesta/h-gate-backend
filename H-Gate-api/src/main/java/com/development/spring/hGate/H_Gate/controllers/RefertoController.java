@@ -44,88 +44,58 @@ public class RefertoController {
     }
 
     @GetMapping("/prenotazione/{prenotazioneId}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE') and @access.prenotazione(authentication, #prenotazioneId)")
     public ResponseDTO<RefertoDTO> findByPrenotazione(@PathVariable Integer prenotazioneId) {
         ResponseDTO<RefertoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(refertoMapper.convertModelToDTO(refertoService.findByPrenotazioneId(prenotazioneId)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(refertoMapper.convertModelToDTO(refertoService.findByPrenotazioneId(prenotazioneId)));
         return res;
     }
 
     @GetMapping("/{pazienteId}/all")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.paziente(authentication, #pazienteId)")
     public ResponseDTO<List<RefertoDTO>> listaRefertiPaziente(@PathVariable("pazienteId") Integer pazienteId) {
         ResponseDTO<List<RefertoDTO>> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(refertoMapper.convertModelsToDtos(refertoService.listaRefertiPaziente(pazienteId)));
         return res;
     }
 
     @GetMapping("/{refertoId}")
-    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE')")
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE') and @access.referto(authentication, #refertoId)")
     public ResponseDTO<RefertoDTO> findById(@PathVariable Integer refertoId) {
         ResponseDTO<RefertoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(refertoMapper.convertModelToDTO(refertoService.getById(refertoId)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(refertoMapper.convertModelToDTO(refertoService.getById(refertoId)));
         return res;
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.prenotazioneDelMedico(authentication, #dto.prenotazioneId)")
     public ResponseDTO<RefertoDTO> create(@RequestBody RefertoCreateDTO dto) {
         ResponseDTO<RefertoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(refertoMapper.convertModelToDTO(refertoService.create(dto)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(refertoMapper.convertModelToDTO(refertoService.create(dto)));
         return res;
     }
 
     @PutMapping("/{refertoId}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.refertoDelMedico(authentication, #refertoId)")
     public ResponseDTO<RefertoDTO> update(@PathVariable Integer refertoId,
                                           @RequestBody RefertoUpdateDTO dto) {
         ResponseDTO<RefertoDTO> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(refertoMapper.convertModelToDTO(refertoService.update(refertoId, dto)));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(refertoMapper.convertModelToDTO(refertoService.update(refertoId, dto)));
         return res;
     }
 
     @DeleteMapping("/{refertoId}")
-    @PreAuthorize("hasAuthority('MEDICO')")
+    @PreAuthorize("hasAuthority('MEDICO') and @access.refertoDelMedico(authentication, #refertoId)")
     public ResponseDTO<Void> delete(@PathVariable Integer refertoId) {
         ResponseDTO<Void> res = new ResponseDTO<>();
-        try {
-            refertoService.delete(refertoId);
-            res.setOk(true);
-            res.setMessage("Referto eliminato con successo");
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        refertoService.delete(refertoId);
+        res.setOk(true);
+        res.setMessage("Referto eliminato con successo");
         return res;
     }
 }

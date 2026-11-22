@@ -22,4 +22,6 @@ public interface PazienteRepository extends CrudRepository<Paziente, Integer> {
 
 //    @Query("SELECT COUNT(p) FROM Paziente p WHERE p.user.isActive = :isActive")
 //    Integer countByIsActive(@Param("isActive") Boolean isActive);
+
+    boolean existsByIdAndMedicoUserId(Integer pazienteId, Integer medicoUserId);
 }

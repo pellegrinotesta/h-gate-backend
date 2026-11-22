@@ -39,12 +39,14 @@ public class Notifica extends BasicEntity {
     private String link;
 
     @Column(name = "is_letta")
+    @Builder.Default
     private Boolean isLetta = false;
 
     @Column(name = "data_lettura")
     private LocalDateTime dataLettura;
 
     @Column(name = "is_inviata_email")
+    @Builder.Default
     private Boolean isInviataEmail = false;
 
     @Column(name = "data_invio_email")

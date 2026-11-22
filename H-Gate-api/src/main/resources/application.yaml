@@ -5,7 +5,7 @@ server:
 
 jasypt:
   encryptor:
-    password: ${JASYPT_PASSWORD}
+    password: ${JASYPT_PASSWORD:}
 
 spring:
   application:
@@ -16,10 +16,10 @@ spring:
       max-file-size: 10MB
       max-request-size: 50MB
   mail:
-    host: smtp.gmail.com
+    host: ${MAIL_HOST:smtp.gmail.com}
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -42,11 +42,14 @@ spring:
 
 app:
   upload:
-    dir: ./uploads/allegati
+    dir: ${UPLOAD_DIR:./uploads/allegati}
 
 application:
   jwt:
     secretKey: ${JWT_SECRET_KEY}
-    cryptoKey: ${JWT_CRYPTO_KEY}
     tokenDurationMs: 1800000
     tokenRenewBeforeExpirationMs: 1800000
+  bootstrap:
+    admin:
+      email: ${ADMIN_EMAIL:}
+      password: ${ADMIN_PASSWORD:}

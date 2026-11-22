@@ -24,7 +24,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import com.development.spring.hGate.H_Gate.dtos.ResponseDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
 
 @Configuration
 @EnableWebSecurity
@@ -69,6 +75,15 @@ public class WebSecurityConfigurer {
                         .anyRequest().authenticated()
                 )
 
+                // 401 se manca il token o non è valido/scaduto, 403 se l'utente non ha i permessi:
+                // il frontend usa il 401 per riportare l'utente al login
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, e) -> writeJsonError(response,
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "Sessione scaduta o non valida: effettua di nuovo l'accesso."))
+                        .accessDeniedHandler((request, response, e) -> writeJsonError(response,
+                                HttpServletResponse.SC_FORBIDDEN,
+                                "Non hai i permessi per accedere a questa risorsa.")))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -76,6 +91,18 @@ public class WebSecurityConfigurer {
         return http.build();
     }
 
+
+    private static void writeJsonError(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        ResponseDTO<Void> body = new ResponseDTO<>();
+        body.setOk(false);
+        body.setMessage(message);
+        JSON.writeValue(response.getWriter(), body);
+    }
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {

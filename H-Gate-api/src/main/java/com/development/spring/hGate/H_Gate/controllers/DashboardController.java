@@ -33,13 +33,8 @@ public class DashboardController {
     public ResponseDTO<DashboardPazienteResponse> dashboardPaziente(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<DashboardPazienteResponse> res = new ResponseDTO<>();
-        try{
-            res.setOk(true);
-            res.setData(dashboardService.dashboardPaziente(jwtAuthentication.getId()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(dashboardService.dashboardPaziente(jwtAuthentication.getId()));
         return res;
     }
 
@@ -52,13 +47,8 @@ public class DashboardController {
     public ResponseDTO<DashboardMedicoResponse> dashboardMedico(
             @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
         ResponseDTO<DashboardMedicoResponse> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(dashboardService.dashboardMedico(jwtAuthentication.getId()));
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(dashboardService.dashboardMedico(jwtAuthentication.getId()));
         return res;
     }
 
@@ -70,13 +60,8 @@ public class DashboardController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseDTO<KpiData> dashboardAdmin() {
         ResponseDTO<KpiData> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(dashboardService.getKpiData());
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(dashboardService.getKpiData());
 
         return res;
     }
@@ -86,15 +71,11 @@ public class DashboardController {
             description = "Recupera i dati completi della dashboard per la gestione amministrativa."
     )
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseDTO<DashboardAdminResponse> getDashboard() {
         ResponseDTO<DashboardAdminResponse> res = new ResponseDTO<>();
-        try {
-            res.setOk(true);
-            res.setData(dashboardService.getDashboardData());
-        } catch (Exception ex) {
-            res.setOk(false);
-            res.setMessage(ex.getMessage());
-        }
+        res.setOk(true);
+        res.setData(dashboardService.getDashboardData());
         return res;
     }
 }

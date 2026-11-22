@@ -25,9 +25,10 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -41,48 +42,52 @@ public class AllegatoService extends BasicService {
     private final PrenotazioneRepository prenotazioneRepository;
     private final MedicoRepository medicoRepository;
 
-    private static final List<String> ALLOWED_TYPES = List.of(
-            "application/pdf", "image/jpeg", "image/png"
+    /** Tipi ammessi: MIME dichiarato -> estensione e codice tipo_file salvati. */
+    private static final Map<String, String[]> ALLOWED_TYPES = Map.of(
+            "application/pdf", new String[]{"pdf", "PDF"},
+            "image/jpeg", new String[]{"jpg", "JPEG"},
+            "image/png", new String[]{"png", "PNG"}
     );
     private static final long MAX_SIZE = 10_485_760;
+    private static final int MAX_FILES_PER_UPLOAD = 10;
 
     @Transactional
     public List<Allegato> uploadAllegati(Integer prenotazioneId, List<MultipartFile> files) {
         Prenotazione prenotazione = prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prenotazione non trovata"));
 
+        if (files == null || files.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nessun file selezionato");
+        }
+        if (files.size() > MAX_FILES_PER_UPLOAD) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Puoi caricare al massimo " + MAX_FILES_PER_UPLOAD + " file alla volta");
+        }
+
+        // Validazione di tutti i file prima di scrivere qualsiasi cosa su disco
+        for (MultipartFile file : files) {
+            validaFile(file);
+        }
+
+        Path dir = Paths.get(uploadDir, String.valueOf(prenotazioneId)).toAbsolutePath().normalize();
+        List<Path> scritti = new ArrayList<>();
         List<Allegato> salvati = new ArrayList<>();
 
-        for(MultipartFile file: files) {
-            if(!ALLOWED_TYPES.contains(file.getContentType())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Tipo file non supportato: " + file.getOriginalFilename());
-            }
-
-            if(file.getSize() > MAX_SIZE) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File troppo grande: " + file.getOriginalFilename());
-            }
-
-            try {
-                Path dir = Paths.get(uploadDir, String.valueOf(prenotazioneId));
-                Files.createDirectories(dir);
-
-                String ext = getEstensione(file.getOriginalFilename());
-                String nomeFile = UUID.randomUUID() + "." + ext;
+        try {
+            Files.createDirectories(dir);
+            for (MultipartFile file : files) {
+                String[] tipo = ALLOWED_TYPES.get(file.getContentType());
+                // Il nome su disco è generato dal server: il nome originale non entra mai nel percorso
+                String nomeFile = UUID.randomUUID() + "." + tipo[0];
                 Path filePath = dir.resolve(nomeFile);
 
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                String tipoFile = switch (file.getContentType()) {
-                    case "application/pdf" -> "PDF";
-                    case "image/jpeg" -> "JPEG";
-                    case "image/png" -> "PNG";
-                    default -> "TXT";
-                };
+                try (InputStream in = file.getInputStream()) {
+                    Files.copy(in, filePath);
+                }
+                scritti.add(filePath);
 
                 Allegato allegato = Allegato.builder()
                         .uuid(UUID.randomUUID().toString())
-                        .nomeFile(file.getOriginalFilename())
-                        .tipoFile(tipoFile)
+                        .nomeFile(nomeOriginaleSicuro(file.getOriginalFilename(), tipo[0]))
+                        .tipoFile(tipo[1])
                         .mimeType(file.getContentType())
                         .sizeBytes(file.getSize())
                         .url("/allegati/" + prenotazioneId + "/" + nomeFile)
@@ -91,22 +96,86 @@ public class AllegatoService extends BasicService {
                         .build();
 
                 salvati.add(allegatoRepository.save(allegato));
-
-            } catch (IOException e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore nel salvataggio del file: " + file.getOriginalFilename());
             }
+        } catch (IOException | RuntimeException e) {
+            // Nessun file orfano su disco se l'operazione fallisce a metà (il DB fa rollback)
+            for (Path p : scritti) {
+                try { Files.deleteIfExists(p); } catch (IOException ignored) { }
+            }
+            if (e instanceof ResponseStatusException rse) throw rse;
+            logger.error("Errore nel salvataggio degli allegati per la prenotazione {}", prenotazioneId, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore nel salvataggio dei file");
         }
 
         return salvati;
     }
 
-    public Resource scaricaAllegato(Integer allegatoId) {
-        Allegato allegato = allegatoRepository.findById(allegatoId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Allegato non trovato"));
+    private void validaFile(MultipartFile file) {
+        String nome = file.getOriginalFilename();
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File vuoto: " + nome);
+        }
+        if (file.getSize() > MAX_SIZE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File troppo grande (max 10 MB): " + nome);
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_TYPES.containsKey(contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Tipo file non supportato (ammessi PDF, JPG, PNG): " + nome);
+        }
+        // Il Content-Type è dichiarato dal client: si verifica che il contenuto corrisponda davvero
+        if (!contenutoCorrisponde(file, contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Il contenuto del file non corrisponde al tipo dichiarato: " + nome);
+        }
+    }
 
+    /** Controllo delle "magic bytes" iniziali del file. */
+    static boolean contenutoCorrisponde(MultipartFile file, String contentType) {
+        byte[] head = new byte[8];
+        int letti;
+        try (InputStream in = file.getInputStream()) {
+            letti = in.readNBytes(head, 0, head.length);
+        } catch (IOException e) {
+            return false;
+        }
+        return switch (contentType) {
+            case "application/pdf" -> letti >= 4 && head[0] == '%' && head[1] == 'P' && head[2] == 'D' && head[3] == 'F';
+            case "image/jpeg" -> letti >= 3 && (head[0] & 0xFF) == 0xFF && (head[1] & 0xFF) == 0xD8 && (head[2] & 0xFF) == 0xFF;
+            case "image/png" -> letti >= 8 && (head[0] & 0xFF) == 0x89 && head[1] == 'P' && head[2] == 'N' && head[3] == 'G'
+                    && head[4] == 0x0D && head[5] == 0x0A && head[6] == 0x1A && head[7] == 0x0A;
+            default -> false;
+        };
+    }
+
+    /** Nome da mostrare all'utente: niente percorsi né caratteri di controllo. */
+    static String nomeOriginaleSicuro(String originale, String estensione) {
+        String nome = originale == null ? "" : originale;
+        nome = nome.replace('\\', '/');
+        nome = nome.substring(nome.lastIndexOf('/') + 1);
+        nome = nome.replaceAll("[\\p{Cntrl}\"<>|:*?]", "_").trim();
+        if (nome.isEmpty() || nome.equals(".") || nome.equals("..")) {
+            nome = "allegato." + estensione;
+        }
+        return nome.length() > 200 ? nome.substring(nome.length() - 200) : nome;
+    }
+
+    public Allegato getAllegato(Integer allegatoId) {
+        return allegatoRepository.findById(allegatoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Allegato non trovato"));
+    }
+
+    public Resource scaricaAllegato(Allegato allegato) {
         try {
-            Path filePath = Paths.get(allegato.getStoragePath());
+            Path base = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path filePath = Paths.get(allegato.getStoragePath()).toAbsolutePath().normalize();
+            // Difesa in profondità: si servono solo file dentro la cartella degli upload
+            if (!filePath.startsWith(base)) {
+                logger.error("Percorso allegato {} fuori dalla cartella upload", allegato.getId());
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File non trovato");
+            }
             Resource resource = new UrlResource(filePath.toUri());
-            if(!resource.exists()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File non trovato");
+            if (!resource.exists()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File non trovato");
             return resource;
         } catch (MalformedURLException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Errore nel download del file");
@@ -115,11 +184,6 @@ public class AllegatoService extends BasicService {
 
     public List<Allegato> getByPrenotazione(Integer prenotazioneId) {
         return allegatoRepository.findByPrenotazioneId(prenotazioneId);
-    }
-
-    private String getEstensione(String nomeFile) {
-        if(nomeFile == null || nomeFile.contains(".")) return "bin";
-        return nomeFile.substring(nomeFile.lastIndexOf('.') + 1).toLowerCase();
     }
 
     public List<Allegato> getByPaziente(Integer pazienteId, JwtAuthentication auth) {

@@ -22,7 +22,7 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
             @Param("medicoId") Integer medicoId,
             @Param("dataOra")LocalDateTime dataOra,
             @Param("dataOraFine") LocalDateTime dataOraFine,
-            @Param("stati") List<String> stati
+            @Param("stati") List<StatoPrenotazioneEnum> stati
             );
 
     /**
@@ -67,4 +67,6 @@ public interface PrenotazioneRepository extends CrudRepository<Prenotazione, Int
     List<Prenotazione> findByStatoAndDataOraBefore(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime tra24Ore);
 
     List<Prenotazione> findByStatoAndCreatedAtBeforeAndConfermaInviataFalse(StatoPrenotazioneEnum statoPrenotazioneEnum, LocalDateTime limite);
+
+    boolean existsByPazienteIdAndMedicoUserId(Integer pazienteId, Integer medicoUserId);
 }

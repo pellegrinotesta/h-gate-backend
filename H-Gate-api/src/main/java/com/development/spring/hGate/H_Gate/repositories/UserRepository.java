@@ -20,4 +20,9 @@ public interface UserRepository extends CrudRepository<Users, Integer> {
     @Query("SELECT u FROM Users u WHERE u.id = :userId")
     Optional<Users> findByUserId(Long userId);
 
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Users u JOIN u.roles r WHERE r = :role")
+    boolean existsByRole(@Param("role") com.development.spring.hGate.H_Gate.shared.models.Role role);
+
+    @Query("SELECT u FROM Users u JOIN u.roles r WHERE r = :role AND (u.isActive IS NULL OR u.isActive = true)")
+    java.util.List<Users> findActiveByRole(@Param("role") com.development.spring.hGate.H_Gate.shared.models.Role role);
 }

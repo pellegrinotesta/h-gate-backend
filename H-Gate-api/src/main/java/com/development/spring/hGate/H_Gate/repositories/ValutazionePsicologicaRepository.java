@@ -16,4 +16,7 @@ public interface ValutazionePsicologicaRepository extends CrudRepository<Valutaz
     List<ValutazionePsicologica> valutazioniPsicologicaPazienteAndMedico(@Param("pazienteId") Integer pazienteId, @Param("medicoId") Integer medicoId);
 
     List<ValutazionePsicologica> findByPazienteIdOrderByDataValutazioneDesc(Integer pazienteId);
+
+    /** medico è un riferimento a Users: medicoUserId è l'id utente del medico */
+    boolean existsByPazienteIdAndMedicoId(Integer pazienteId, Integer medicoUserId);
 }

@@ -115,6 +115,8 @@ public class WebSecurityConfigurer {
         corsConfiguration.setAllowedOrigins(allowedOrigins);
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
+        // Permette al frontend di leggere il nome dei file scaricati (es. PDF della cartella clinica)
+        corsConfiguration.addExposedHeader("Content-Disposition");
         corsConfiguration.setMaxAge(1800L); // 30 min
         final var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);

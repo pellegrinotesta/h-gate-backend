@@ -12,9 +12,11 @@ spring:
       mode: never
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    # Default: MySQL installato in locale (il DB viene creato se non esiste, le tabelle da Hibernate).
+    # Si possono sovrascrivere con le variabili d'ambiente DB_URL / DB_USER / DB_PASSWORD.
+    url: ${DB_URL:jdbc:mysql://localhost:3306/hgate?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Rome}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
@@ -26,4 +28,8 @@ spring:
 
 application:
   cors:
-    allowedOrigins: ${CORS_ALLOWED_ORIGINS}
+    allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
+  jwt:
+    # Chiave SOLO per sviluppo locale
+    secretKey: ${JWT_SECRET_KEY:mT+ZOuAO7iYY7+PzN4u4C9yr+cL3bKwikwkSgAwCgFBlbJOtkqC7sehuMZ+YF1YL}

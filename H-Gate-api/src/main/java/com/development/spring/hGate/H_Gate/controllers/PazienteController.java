@@ -11,6 +11,13 @@ import com.development.spring.hGate.H_Gate.libs.web.dtos.PageDTO;
 import com.development.spring.hGate.H_Gate.mappers.PazienteMapper;
 import com.development.spring.hGate.H_Gate.security.models.JwtAuthentication;
 import com.development.spring.hGate.H_Gate.services.PazienteService;
+import com.development.spring.hGate.H_Gate.services.CartellaClinicaPdfService;
+import com.development.spring.hGate.H_Gate.audit.AuditContext;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +40,7 @@ public class PazienteController {
 
     private final PazienteService pazienteService;
     private final PazienteMapper pazienteMapper;
+    private final CartellaClinicaPdfService cartellaClinicaPdfService;
 
     @Operation(summary = "Ottieni paziente per ID", description = "Recupera i dati anagrafici di un singolo paziente tramite il suo ID univoco.")
     @GetMapping("/{id}")
@@ -43,6 +51,31 @@ public class PazienteController {
         res.setOk(true);
         res.setData(pazienteMapper.convertModelToDTO(pazienteService.getById(id)));
         return res;
+    }
+
+    @Operation(summary = "Scarica la cartella clinica in PDF",
+            description = "Genera il documento ufficiale (A4) con anagrafica, referti, valutazioni, percorsi e allegati del paziente. "
+                    + "L'operazione viene registrata nel registro accessi come DOWNLOAD della cartella clinica.")
+    @GetMapping(value = "/{id}/cartella/download", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasAnyAuthority('MEDICO', 'TUTORE', 'ADMIN') and @access.paziente(authentication, #id)")
+    public ResponseEntity<byte[]> downloadCartellaClinica(
+            @Parameter(description = "ID del paziente") @PathVariable("id") Integer id,
+            @Parameter(hidden = true) JwtAuthentication jwtAuthentication) {
+        // Nel registro accessi l'operazione risulta come esportazione della cartella, non come semplice lettura del paziente
+        AuditContext.sovrascriviRisorsa("CARTELLA_CLINICA", id);
+        AuditContext.paziente(id);
+
+        CartellaClinicaPdfService.CartellaPdf pdf = cartellaClinicaPdfService.genera(id, jwtAuthentication);
+        // Il nome del file è già ridotto a soli caratteri ASCII dal servizio
+        ContentDisposition disposition = ContentDisposition.attachment()
+                .filename(pdf.nomeFile())
+                .build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .header("X-Content-Type-Options", "nosniff")
+                .cacheControl(CacheControl.noStore())
+                .body(pdf.contenuto());
     }
 
     @Operation(summary = "Ricerca avanzata pazienti", description = "Permette ai medici di cercare pazienti filtrandoli per criteri specifici con supporto alla paginazione.")

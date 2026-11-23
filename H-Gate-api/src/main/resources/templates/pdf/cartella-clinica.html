@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="'Cartella clinica - ' + ${paziente.nomeCompleto}">Cartella clinica</title>
+    <meta name="author" content="H-Gate"/>
+    <meta name="subject" content="Cartella clinica"/>
+    <style>
+        /* ================================================================
+           Impaginazione A4 (CSS paged media, supportato da OpenHTMLtoPDF)
+           ================================================================ */
+        @page {
+            size: A4;
+            margin: 22mm 16mm 20mm 16mm;
+
+            @top-left { content: element(intestazione); vertical-align: bottom; }
+
+            @bottom-left {
+                content: "H-Gate · Documento riservato contenente dati sanitari";
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 7pt;
+                color: #6b7280;
+                vertical-align: top;
+                padding-top: 4mm;
+            }
+
+            @bottom-right {
+                content: "Pagina " counter(page) " di " counter(pages);
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 7pt;
+                color: #6b7280;
+                vertical-align: top;
+                padding-top: 4mm;
+            }
+        }
+
+        /* La prima pagina ha la carta intestata completa: niente intestazione ridotta */
+        @page :first {
+            margin-top: 14mm;
+            @top-left { content: none; }
+        }
+
+        #intestazione {
+            position: running(intestazione);
+            width: 178mm;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 7.5pt;
+            color: #6b7280;
+            border-bottom: 0.5pt solid #d1d5db;
+            padding-bottom: 2mm;
+        }
+        #intestazione table { width: 100%; border-collapse: collapse; }
+        #intestazione td { padding: 0; }
+        #intestazione .dx { text-align: right; }
+        #intestazione strong { color: #111827; }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.4;
+            color: #111827;
+            margin: 0;
+        }
+
+        table { border-collapse: collapse; }
+        p { margin: 0; }
+
+        /* ---------- Carta intestata ---------- */
+        .letterhead { width: 100%; border-bottom: 2pt solid #0a66a8; }
+        .letterhead td { vertical-align: bottom; padding: 0 0 8pt 0; }
+        .logo { width: 34pt; height: 34pt; }
+        .brand-cell { width: 40pt; }
+        .brand-name { font-size: 16pt; font-weight: bold; color: #111827; }
+        .brand-sub { font-size: 8pt; color: #6b7280; }
+        .doc-cell { text-align: right; }
+        .doc-type { font-size: 13pt; font-weight: bold; letter-spacing: 2pt; color: #111827; margin-bottom: 3pt; }
+        .meta { margin-left: auto; font-size: 8pt; }
+        .meta th { font-weight: normal; color: #6b7280; text-align: right; padding: 0 6pt 0 0; }
+        .meta td { font-weight: bold; text-align: right; padding: 0; }
+
+        .riservato { font-size: 7.5pt; font-style: italic; color: #6b7280; margin: 6pt 0 14pt 0; }
+
+        /* ---------- Sezioni ---------- */
+        .sezione { margin-bottom: 14pt; }
+
+        h2 {
+            font-size: 10.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5pt;
+            margin: 0 0 6pt 0;
+            padding-bottom: 3pt;
+            border-bottom: 0.75pt solid #111827;
+            page-break-after: avoid;
+        }
+        .num {
+            display: inline-block;
+            width: 13pt;
+            height: 13pt;
+            line-height: 13pt;
+            text-align: center;
+            background-color: #0a66a8;
+            color: #ffffff;
+            font-size: 8pt;
+            margin-right: 5pt;
+        }
+        .conteggio { font-weight: normal; color: #6b7280; text-transform: none; letter-spacing: 0; }
+        .vuoto { font-style: italic; color: #6b7280; }
+
+        /* ---------- Dati paziente ---------- */
+        .griglia { width: 100%; table-layout: fixed; }
+        .griglia th, .griglia td {
+            border: 0.5pt solid #d1d5db;
+            padding: 4pt 6pt;
+            vertical-align: top;
+            text-align: left;
+        }
+        .griglia th { width: 17%; background-color: #f3f4f6; font-size: 8pt; font-weight: bold; color: #374151; }
+        .griglia td { width: 33%; }
+        .allerta { color: #b91c1c; font-weight: bold; }
+        .mono { font-family: Courier, monospace; letter-spacing: 0.5pt; }
+
+        /* ---------- Referti e valutazioni ---------- */
+        .record {
+            border: 0.5pt solid #d1d5db;
+            padding: 7pt 9pt;
+            margin-bottom: 8pt;
+            page-break-inside: avoid;
+        }
+        .record-testa { width: 100%; }
+        .record-testa td { padding: 0; vertical-align: baseline; }
+        .record-idx { font-weight: bold; color: #0a66a8; padding-right: 5pt; }
+        .record-titolo { font-size: 10.5pt; font-weight: bold; }
+        .record-data { text-align: right; font-weight: bold; white-space: nowrap; }
+        .record-sub {
+            font-size: 8pt;
+            color: #6b7280;
+            margin: 2pt 0 5pt 0;
+            padding-bottom: 5pt;
+            border-bottom: 0.5pt dashed #d1d5db;
+        }
+        .firmato { color: #15803d; font-weight: bold; }
+
+        .campi { width: 100%; }
+        .campi th {
+            width: 95pt;
+            text-align: left;
+            vertical-align: top;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #374151;
+            padding: 2pt 8pt 2pt 0;
+        }
+        .campi td { vertical-align: top; padding: 2pt 0; white-space: pre-line; }
+        .campi td.evidenza { font-weight: bold; }
+
+        /* ---------- Tabelle elenco ---------- */
+        .elenco { width: 100%; margin: 2pt 0 4pt 0; -fs-table-paginate: paginate; }
+        .elenco th {
+            text-align: left;
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.4pt;
+            color: #374151;
+            background-color: #f3f4f6;
+            border-top: 0.75pt solid #111827;
+            border-bottom: 0.75pt solid #111827;
+            padding: 4pt 6pt;
+            white-space: nowrap;
+        }
+        .elenco td { padding: 4pt 6pt; border-bottom: 0.5pt solid #e5e7eb; vertical-align: top; }
+        .elenco tr { page-break-inside: avoid; }
+        .compatta { width: 60%; }
+        .compatta th, .compatta td { padding: 2.5pt 6pt; }
+        .nota { font-size: 8pt; color: #6b7280; margin-top: 1pt; }
+        .dx { text-align: right; }
+        .nowrap { white-space: nowrap; }
+
+        /* ---------- Chiusura ---------- */
+        .chiusura { margin-top: 18pt; page-break-inside: avoid; }
+        .disclaimer { font-size: 7.5pt; color: #6b7280; margin-bottom: 34pt; }
+        .firme { width: 100%; }
+        .firme td { width: 42%; text-align: center; font-size: 8pt; color: #6b7280; padding: 0; }
+        .firme td.spazio { width: 16%; }
+        .linea { border-bottom: 0.75pt solid #111827; height: 30pt; margin-bottom: 3pt; }
+    </style>
+</head>
+<body>
+
+<!-- Intestazione ridotta ripetuta dalla seconda pagina -->
+<div id="intestazione">
+    <table>
+        <tr>
+            <td>H-Gate · <strong>Cartella clinica n. <span th:text="${numeroCartella}">000001</span></strong></td>
+            <td class="dx"><strong th:text="${paziente.nomeCompleto}">ROSSI Mario</strong> · CF <span th:text="${paziente.codiceFiscale}">CF</span></td>
+        </tr>
+    </table>
+</div>
+
+<!-- Carta intestata -->
+<table class="letterhead">
+    <tr>
+        <td class="brand-cell" th:if="${logo != null}"><img class="logo" th:src="${logo}" alt=""/></td>
+        <td>
+            <div class="brand-name">H-Gate</div>
+            <div class="brand-sub">Servizio di Neuropsichiatria dell'Infanzia e dell'Adolescenza</div>
+        </td>
+        <td class="doc-cell">
+            <div class="doc-type">CARTELLA CLINICA</div>
+            <table class="meta">
+                <tr><th>N. cartella</th><td th:text="${numeroCartella}">000001</td></tr>
+                <tr><th>Data di emissione</th><td th:text="${emissione}">01/01/2026 alle 10:00</td></tr>
+                <tr th:if="${emessaDa != null}"><th>Emessa da</th><td th:text="${emessaDa}">Nome Cognome</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<p class="riservato">
+    Documento riservato contenente dati relativi alla salute (art. 9 Reg. UE 2016/679).
+    Ne è vietata la comunicazione o diffusione a soggetti non autorizzati.
+</p>
+
+<!-- 1. Dati del paziente -->
+<div class="sezione">
+    <h2><span class="num">1</span>Dati del paziente</h2>
+    <table class="griglia">
+        <tr>
+            <th>Cognome e nome</th>
+            <td><strong th:text="${paziente.nomeCompleto}">ROSSI Mario</strong></td>
+            <th>Codice fiscale</th>
+            <td class="mono" th:text="${paziente.codiceFiscale}">CF</td>
+        </tr>
+        <tr>
+            <th>Data di nascita</th>
+            <td th:text="${paziente.dataNascita} + (${paziente.eta} != null ? ' (' + ${paziente.eta} + ')' : '')">01/01/2015</td>
+            <th>Sesso</th>
+            <td th:text="${paziente.sesso}">Maschile</td>
+        </tr>
+        <tr>
+            <th>Residenza</th>
+            <td th:text="${paziente.residenza}">Milano</td>
+            <th>Gruppo sanguigno</th>
+            <td th:text="${paziente.gruppoSanguigno}">A+</td>
+        </tr>
+        <tr>
+            <th>Altezza</th>
+            <td th:text="${paziente.altezza}">145 cm</td>
+            <th>Peso</th>
+            <td th:text="${paziente.peso}">42 kg</td>
+        </tr>
+        <tr>
+            <th>Allergie</th>
+            <td colspan="3" th:classappend="${paziente.allergiePresenti} ? 'allerta'" th:text="${paziente.allergie}">Nessuna</td>
+        </tr>
+        <tr>
+            <th>Patologie croniche</th>
+            <td colspan="3" th:text="${paziente.patologie}">Nessuna</td>
+        </tr>
+        <tr th:if="${paziente.note != null}">
+            <th>Note mediche</th>
+            <td colspan="3" th:text="${paziente.note}">Note</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 2. Referti -->
+<div class="sezione">
+    <h2><span class="num">2</span>Referti medici <span class="conteggio" th:text="'(' + ${#lists.size(referti)} + ')'">(0)</span></h2>
+    <p class="vuoto" th:if="${#lists.isEmpty(referti)}">Nessun referto registrato.</p>
+    <div class="record" th:each="r, st : ${referti}">
+        <table class="record-testa">
+            <tr>
+                <td>
+                    <span class="record-idx" th:text="'2.' + ${st.count}">2.1</span>
+                    <span class="record-titolo" th:text="${r.titolo}">Titolo</span>
+                </td>
+                <td class="record-data" th:text="${r.data}">01/01/2026</td>
+            </tr>
+        </table>
+        <div class="record-sub">
+            Tipo: <span th:text="${r.tipo}">Controllo</span>
+            <th:block th:if="${r.medico != null}"> · Specialista: <span th:text="${r.medico}">Nome</span><th:block th:if="${r.qualifica != null}"> (<span th:text="${r.qualifica}">Qualifica</span>)</th:block></th:block>
+            · <span th:classappend="${r.firmato} ? 'firmato'" th:text="${r.firma}">Firmato</span>
+        </div>
+        <table class="campi">
+            <tr th:each="c : ${r.campi}">
+                <th th:text="${c.etichetta}">Campo</th>
+                <td th:classappend="${c.evidenza} ? 'evidenza'" th:text="${c.valore}">Valore</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- 3. Valutazioni psicologiche -->
+<div class="sezione">
+    <h2><span class="num">3</span>Valutazioni psicologiche <span class="conteggio" th:text="'(' + ${#lists.size(valutazioni)} + ')'">(0)</span></h2>
+    <p class="vuoto" th:if="${#lists.isEmpty(valutazioni)}">Nessuna valutazione registrata.</p>
+    <div class="record" th:each="v, st : ${valutazioni}">
+        <table class="record-testa">
+            <tr>
+                <td>
+                    <span class="record-idx" th:text="'3.' + ${st.count}">3.1</span>
+                    <span class="record-titolo" th:text="${v.tipoTest}">Test</span>
+                </td>
+                <td class="record-data" th:text="${v.data}">01/01/2026</td>
+            </tr>
+        </table>
+        <div class="record-sub">Somministrata da: <span th:text="${v.medico}">Nome</span></div>
+        <table class="elenco compatta" th:if="${v.punteggi != null}">
+            <thead><tr><th>Scala / indice</th><th class="dx">Punteggio</th></tr></thead>
+            <tbody>
+                <tr th:each="e : ${v.punteggi}">
+                    <td th:text="${e.key}">Scala</td>
+                    <td class="dx" th:text="${e.value}">0</td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="campi">
+            <tr th:if="${v.punteggiTesto != null}"><th>Punteggi</th><td th:text="${v.punteggiTesto}">...</td></tr>
+            <tr th:if="${v.interpretazione != null}"><th>Interpretazione</th><td th:text="${v.interpretazione}">...</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- 4. Percorsi terapeutici -->
+<div class="sezione">
+    <h2><span class="num">4</span>Percorsi terapeutici <span class="conteggio" th:text="'(' + ${#lists.size(percorsi)} + ')'">(0)</span></h2>
+    <p class="vuoto" th:if="${#lists.isEmpty(percorsi)}">Nessun percorso terapeutico registrato.</p>
+    <table class="elenco" th:unless="${#lists.isEmpty(percorsi)}">
+        <thead>
+            <tr>
+                <th>Percorso</th>
+                <th>Specialista</th>
+                <th>Inizio</th>
+                <th>Fine prevista</th>
+                <th class="dx">Sedute</th>
+                <th>Stato</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="p : ${percorsi}">
+                <td>
+                    <strong th:text="${p.titolo}">Percorso</strong>
+                    <div class="nota" th:if="${p.obiettivi != null}" th:text="'Obiettivi: ' + ${p.obiettivi}">Obiettivi</div>
+                </td>
+                <td th:text="${p.medico}">Nome</td>
+                <td class="nowrap" th:text="${p.inizio}">01/01/2026</td>
+                <td class="nowrap" th:text="${p.finePrevista}">—</td>
+                <td class="dx nowrap" th:text="${p.sedute}">0 / 10</td>
+                <td class="nowrap" th:text="${p.stato}">Attivo</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 5. Documentazione allegata -->
+<div class="sezione">
+    <h2><span class="num">5</span>Documentazione allegata <span class="conteggio" th:text="'(' + ${#lists.size(allegati)} + ')'">(0)</span></h2>
+    <p class="vuoto" th:if="${#lists.isEmpty(allegati)}">Nessun documento allegato.</p>
+    <table class="elenco" th:unless="${#lists.isEmpty(allegati)}">
+        <thead>
+            <tr><th>Documento</th><th>Tipo</th><th class="dx">Dimensione</th><th>Caricato il</th></tr>
+        </thead>
+        <tbody>
+            <tr th:each="a : ${allegati}">
+                <td>
+                    <span th:text="${a.nome}">file.pdf</span>
+                    <div class="nota" th:if="${a.descrizione != null}" th:text="${a.descrizione}">Descrizione</div>
+                </td>
+                <td th:text="${a.tipo}">PDF</td>
+                <td class="dx nowrap" th:text="${a.dimensione}">1 MB</td>
+                <td class="nowrap" th:text="${a.caricato}">01/01/2026</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Chiusura e firme -->
+<div class="chiusura">
+    <p class="disclaimer">
+        Documento generato dal sistema H-Gate il <span th:text="${emissione}">data</span>.
+        Le informazioni riportate corrispondono a quanto registrato nella cartella clinica elettronica alla data di emissione.
+    </p>
+    <table class="firme">
+        <tr>
+            <td><div class="linea"></div>Luogo e data</td>
+            <td class="spazio"></td>
+            <td><div class="linea"></div>Timbro e firma del medico</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
